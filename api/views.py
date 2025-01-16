@@ -184,10 +184,13 @@ def list_photos(request):
 
     if is_verified is not None:
         photos = RetailerPhoto.objects.filter(is_verified=is_verified)
+        retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
     elif is_approved is not None:
         photos = RetailerPhoto.objects.filter(is_approved=is_approved)
+        retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
     else:
         photos = RetailerPhoto.objects.all()
+        retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
 
     response_data = {}
     for photo in photos:
@@ -195,6 +198,7 @@ def list_photos(request):
         if retailer_id not in response_data:
             response_data[retailer_id] = {
                 "retailer_id": retailer_id,
+                "retailer_name": retailer_name,
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
