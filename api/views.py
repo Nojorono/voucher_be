@@ -179,7 +179,6 @@ def redeem_report(request, name=None):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_photos(request):
-    # retailer = get_object_or_404(Retailer, id=retailer_id)
     is_verified = request.query_params.get('is_verified')
     is_approved = request.query_params.get('is_approved')
 
@@ -190,8 +189,21 @@ def list_photos(request):
     else:
         photos = RetailerPhoto.objects.all()
 
-    serializer = RetailerPhotoSerializer(photos, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    response_data = {}
+    for photo in photos:
+        retailer_id = photo.retailer.id
+        if retailer_id not in response_data:
+            response_data[retailer_id] = {
+                "retailer_id": retailer_id,
+                "photos": []
+            }
+        response_data[retailer_id]["photos"].append({
+            "image": photo.image.url,
+            "is_verified": photo.is_verified,
+            "is_approved": photo.is_approved
+        })
+
+    return Response(list(response_data.values()), status=status.HTTP_200_OK)
 
 # Verify Photo View
 # @api_view(['POST'])
