@@ -1,0 +1,28 @@
+<!-- wholesales/redeem_report.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Redeem Voucher</title>
+</head>
+<body>
+    <h2>Laporan Redeem Voucher</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Kode Voucher</th>
+                <th>Tanggal Redeem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for redeem in redeemed_vouchers %}
+                <tr>
+                    <td>{{ redeem.voucher.code }}</td>
+                    <td>{{ redeem.redeemed_at }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

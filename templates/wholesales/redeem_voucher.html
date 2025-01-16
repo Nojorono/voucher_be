@@ -1,0 +1,21 @@
+<!-- wholesales/redeem_voucher.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redeem Voucher</title>
+</head>
+<body>
+    <h2>Redeem Voucher</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="ws_name">Masukkan Nama WS:</label>
+        <input type="text" id="ws_name" name="ws_name" required><br><br>
+        <label for="voucher_code">Masukkan Kode Voucher:</label>
+        <input type="text" id="voucher_code" name="voucher_code" required><br><br>
+
+        <button type="submit">Redeem</button>
+    </form>
+</body>
+</html>

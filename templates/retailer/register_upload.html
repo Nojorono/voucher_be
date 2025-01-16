@@ -1,0 +1,48 @@
+<!-- retailer/register_upload.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendaftaran dan Upload Foto Retailer</title>
+</head>
+<body>
+    <h2>Pendaftaran dan Upload Foto Retailer</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Bagian Pendaftaran Retailer -->
+        <fieldset>
+            <legend>Data Retailer</legend>
+
+            <label for="ws_name">WS Name:</label>
+            <input type="text" id="ws_name" name="ws_name" required><br><br>
+
+            <label for="name">Nama:</label>
+            <input type="text" id="name" name="name" required><br><br>
+
+            <label for="phone_number">Nomor Telepon:</label>
+            <input type="text" id="phone_number" name="phone_number" required><br><br>
+
+            <label for="address">Alamat:</label>
+            <textarea id="address" name="address" required></textarea><br><br>
+        </fieldset>
+
+        <br>
+
+        <!-- Bagian Upload Foto -->
+        <fieldset>
+            <legend>Upload Foto</legend>
+
+            <label for="photo">Pilih Foto:</label>
+            <input type="file" id="photo" name="photo" accept="image/*" multiple required><br><br>
+
+        </fieldset>
+
+        <br>
+
+        <!-- Tombol Submit -->
+        <button type="submit">Daftar dan Upload Foto</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Foto</title>
+    <style>
+        /* Gaya untuk modal */
+        .modal {
+            display: none; /* Modal tidak terlihat secara default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 80%;
+        }
+
+        .modal-content:hover {
+            cursor: zoom-out;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .modal-close:hover,
+        .modal-close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Styling untuk gambar mini */
+        .photo-thumbnail {
+            width: 150px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        /* Membuat layout fleksibel agar gambar mini sejajar */
+        .photo-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Styling untuk form */
+        form {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Verifikasi Foto Retailer</h2>
+    <p><strong>{{ retailer.name }}</strong> (Nomor HP: {{ retailer.phone_number }})</p>
+    
+    <div class="photo-container">
+        {% for photo in photos %}
+            <img src="{{ photo.image.url }}" alt="Foto Retailer" class="photo-thumbnail">
+        {% endfor %}
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <label for="is_verified">Verifikasi Foto:</label>
+        <input type="radio" name="is_verified" value="True" required> Disetujui
+        <input type="radio" name="is_verified" value="False" required> Ditolak<br><br>
+
+        <button type="submit">Verifikasi</button>
+    </form>
+
+    <!-- Modal untuk menampilkan gambar besar -->
+    <div id="photoModal" class="modal">
+        <span class="modal-close" id="closeModal">&times;</span>
+        <img class="modal-content" id="modalImage" src="">
+    </div>
+
+    <script>
+        // Ambil elemen-elemen yang diperlukan
+        const modal = document.getElementById("photoModal");
+        const modalImage = document.getElementById("modalImage");
+        const closeModal = document.getElementById("closeModal");
+
+        // Dapatkan semua gambar mini (thumbnail)
+        const thumbnails = document.querySelectorAll(".photo-thumbnail");
+
+        // Tampilkan modal saat thumbnail diklik
+        thumbnails.forEach(thumbnail => {
+            thumbnail.onclick = function() {
+                modal.style.display = "block";
+                modalImage.src = thumbnail.src;  // Set gambar besar ke gambar thumbnail yang diklik
+            }
+        });
+
+        // Tutup modal saat tombol close diklik
+        closeModal.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Tutup modal saat area luar modal diklik
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

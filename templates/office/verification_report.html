@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Verifikasi Foto</title>
+    <style>
+        /* Styling untuk layout kolom */
+        .retailer-list {
+            margin-bottom: 30px;
+            align-content: left;
+        }
+
+        .photo-container {
+            display: flex;
+            gap: 10px; /* Jarak antar foto */
+            margin-bottom: 15px;
+        }
+
+        .photo-container img {
+            max-width: 150px; /* Ukuran maksimum foto */
+            height: auto;
+        }
+
+        .photo-item {
+            text-align: center;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h2>Laporan Verifikasi Foto Retailer</h2>
+
+    {% if photos_to_verify %}
+        <div >
+            {% for retailer, photos in retailer_photos.items %}
+                <div class="photo-item">
+                    <p><strong>{{ retailer.name }}</strong> (Nomor HP: {{ retailer.phone_number }})</p>
+                    <div class="photo-container">
+                        {% for photo in photos %}
+                            <li><img src="{{ photo.image.url }}" alt="Retailer Photo"></li>
+                        {% endfor %}
+                    </div>
+                    <form method="POST" action="{% url 'office:verify_photo' photo.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Verifikasi</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Semua foto sudah terverifikasi.</p>
+    {% endif %}
+</body>
+</html>
