@@ -185,12 +185,18 @@ def list_photos(request):
     if is_verified is not None:
         photos = RetailerPhoto.objects.filter(is_verified=is_verified)
         retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
+        retailer_phone_number = Retailer.objects.get(id=photos[0].retailer.id).phone_number
+        retailer_address = Retailer.objects.get(id=photos[0].retailer.id).address
     elif is_approved is not None:
         photos = RetailerPhoto.objects.filter(is_approved=is_approved)
         retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
+        retailer_phone_number = Retailer.objects.get(id=photos[0].retailer.id).phone_number
+        retailer_address = Retailer.objects.get(id=photos[0].retailer.id).address
     else:
         photos = RetailerPhoto.objects.all()
         retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
+        retailer_phone_number = Retailer.objects.get(id=photos[0].retailer.id).phone_number
+        retailer_address = Retailer.objects.get(id=photos[0].retailer.id).address
 
     response_data = {}
     for photo in photos:
@@ -199,6 +205,8 @@ def list_photos(request):
             response_data[retailer_id] = {
                 "retailer_id": retailer_id,
                 "retailer_name": retailer_name,
+                "retailer_phone_number": retailer_phone_number,
+                "retailer_address": retailer_address,
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
