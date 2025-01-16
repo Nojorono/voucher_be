@@ -184,29 +184,24 @@ def list_photos(request):
 
     if is_verified is not None:
         photos = RetailerPhoto.objects.filter(is_verified=is_verified)
-        retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
-        retailer_phone_number = Retailer.objects.get(id=photos[0].retailer.id).phone_number
-        retailer_address = Retailer.objects.get(id=photos[0].retailer.id).address
     elif is_approved is not None:
         photos = RetailerPhoto.objects.filter(is_approved=is_approved)
-        retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
-        retailer_phone_number = Retailer.objects.get(id=photos[0].retailer.id).phone_number
-        retailer_address = Retailer.objects.get(id=photos[0].retailer.id).address
     else:
         photos = RetailerPhoto.objects.all()
-        retailer_name = Retailer.objects.get(id=photos[0].retailer.id).name
-        retailer_phone_number = Retailer.objects.get(id=photos[0].retailer.id).phone_number
-        retailer_address = Retailer.objects.get(id=photos[0].retailer.id).address
+
+    if not photos.exists():
+        return Response({"message": "No photos found"}, status=status.HTTP_404_NOT_FOUND)
 
     response_data = {}
     for photo in photos:
-        retailer_id = photo.retailer.id
+        retailer = photo.retailer
+        retailer_id = retailer.id
         if retailer_id not in response_data:
             response_data[retailer_id] = {
                 "retailer_id": retailer_id,
-                "retailer_name": retailer_name,
-                "retailer_phone_number": retailer_phone_number,
-                "retailer_address": retailer_address,
+                "retailer_name": retailer.name,
+                "retailer_phone_number": retailer.phone_number,
+                "retailer_address": retailer.address,
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
