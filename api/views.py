@@ -119,7 +119,7 @@ class RetailerViewSet(viewsets.ModelViewSet):
             return Response({"message": "No photos found for this retailer."}, status=status.HTTP_404_NOT_FOUND)
 
         # Mark all photos as verified
-        photos.update(is_verified=True, is_approved=True)
+        photos.update(is_verified=True, is_approved=True, verified_at=datetime.now())
         return Response({"message": "All photos for retailer verified successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
