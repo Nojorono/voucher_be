@@ -6,6 +6,10 @@ class Retailer(models.Model):
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
     address = models.TextField()
+    kelurahan = models.CharField(max_length=100, null=True, blank=True)
+    kecamatan = models.CharField(max_length=100, null=True, blank=True)
+    kota = models.CharField(max_length=100, null=True, blank=True)
+    provinsi = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     wholesale = models.ForeignKey('wholesales.Wholesale', on_delete=models.CASCADE, null=True, blank=True)
 
@@ -18,6 +22,7 @@ class Voucher(models.Model):
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
     redeemed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    expired_at = models.DateTimeField(default='2025-07-03 23:59:59')
     
     def __str__(self):
         return self.code
@@ -28,6 +33,8 @@ class RetailerPhoto(models.Model):
     image = models.ImageField(upload_to='retailer_photos/')
     is_verified = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False)
+    remarks = models.CharField(max_length=50, null=True, blank=True)
+    verified_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __str__(self):
         return f"Photo of {self.retailer.name}"

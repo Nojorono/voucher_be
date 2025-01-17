@@ -10,12 +10,17 @@ from .views import (
     CustomTokenObtainPairView, 
     RetailerViewSet,
     redeem_voucher,
-    redeem_report,
-    # verify_photo,      
+    redeem_report,   
     office_verification_report,
     retailer_register_upload,
     list_photos,
     list_vouchers,
+    kodepos_list,
+    kelurahan_list,
+    kecamatan_list,
+    kota_list,
+    provinsi_list,
+    KodeposDetailView,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -26,6 +31,7 @@ router = DefaultRouter()
 # router.register(r'users', UserViewSet, basename='user')
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
 router.register(r'retailers', RetailerViewSet, basename='retailer')
+# router.register(r'kodepos', RetailerViewSet, basename='retailer')
 
 
 urlpatterns = [
@@ -36,7 +42,6 @@ urlpatterns = [
     path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
     path('redeem_report/', redeem_report, name='redeem_report'),
     path('redeem_report/<str:name>/', redeem_report, name='redeem_report'),
-    # path('verify_photo/', verify_photo, name='verify_photo'),
     path('list_photos/', list_photos, name='list_photos'),
     path('list_vouchers/', list_vouchers, name='list_vouchers'),
     path('office_verification_report/', office_verification_report, name='office_verification_report'),
@@ -47,9 +52,12 @@ urlpatterns = [
     path('user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),  # Custom route
     path('user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),  # Custom route
     path('user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),  # Custom route
-    # path('retailer/photos/<int:pk>/', RetailerViewSet.as_view({'get': 'photos'}), name='retailer-list-photos'),  # Custom route
-    # path('retailer/verify_photos/', RetailerViewSet.as_view({'post': 'verify_photo'}), name='retailer-verify-photos'),  # Custom route
-    # path('retailer/reject_photos/', RetailerViewSet.as_view({'post': 'reject_photo'}), name='retailer-reject-photos'),  # Custom route
+    path('kodepos/', kodepos_list, name='kodepos-list'),
+    path('kelurahan/', kelurahan_list, name='kelurahan-list'),
+    path('kecamatan/', kecamatan_list, name='kecamatan-list'),
+    path('kota/', kota_list, name='kota-list'),
+    path('provinsi/', provinsi_list, name='provinsi-list'),
+    path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
 
     # Include ViewSet routes
     path('', include(router.urls)),

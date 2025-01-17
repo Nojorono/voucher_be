@@ -37,7 +37,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.username
 
 
+class Kodepos(models.Model):
+    kodepos = models.CharField(max_length=5)
+    kelurahan = models.CharField(max_length=100)
+    kecamatan = models.CharField(max_length=100)
+    kota = models.CharField(max_length=100)
+    provinsi = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=50, null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.CharField(max_length=50, null=True, blank=True)
 
+    def __str__(self):
+        return f"{self.kodepos} - {self.kelurahan}, {self.kecamatan}, {self.kota}"
     
 
 

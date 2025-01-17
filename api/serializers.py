@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from office.models import User
+from office.models import User, Kodepos
 from wholesales.models import Wholesale, VoucherRedeem
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
@@ -247,6 +247,11 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         write_only=True,
         required=True
     )
+    photo_remarks = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True,
+        required=True
+    )
 
     def validate(self, data):
         phone_number = data.get('phone_number')
@@ -269,6 +274,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         photos = validated_data.pop('photos')
+        photo_remarks = validated_data.pop('photo_remarks', [])
         wholesale = validated_data.pop('wholesale')
 
         # Save retailer
@@ -280,9 +286,10 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         }
         retailer = Retailer.objects.create(**retailer_data)
 
-        # Save photos
-        for photo in photos:
-            RetailerPhoto.objects.create(retailer=retailer, image=photo)
+        # Save photos with remarks
+        for index, photo in enumerate(photos):
+            remarks = photo_remarks[index] if index < len(photo_remarks) else ''
+            RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
 
         # Generate and save voucher
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -309,5 +316,10 @@ class VoucherSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+class KodeposSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Kodepos
+        fields = ['kodepos', 'kelurahan', 'kecamatan', 'kota', 'provinsi']
+
 
 

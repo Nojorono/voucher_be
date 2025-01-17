@@ -1,9 +1,10 @@
 # Revised views.py
-from rest_framework import status, viewsets, mixins
+from rest_framework import status, viewsets, mixins, generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from office.models import User
+from office.models import User, Kodepos
 from retailer.models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale, VoucherRedeem
 from django.shortcuts import get_object_or_404
@@ -11,7 +12,7 @@ from .serializers import (
     UserSerializer, CustomTokenObtainPairSerializer, ChangePasswordSerializer, WholesaleSerializer, 
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
-    VoucherSerializer
+    VoucherSerializer, KodeposSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -207,7 +208,8 @@ def list_photos(request):
         response_data[retailer_id]["photos"].append({
             "image": photo.image.url,
             "is_verified": photo.is_verified,
-            "is_approved": photo.is_approved
+            "is_approved": photo.is_approved,
+            "remarks": photo.remarks,
         })
 
     return Response(list(response_data.values()), status=status.HTTP_200_OK)
@@ -236,3 +238,59 @@ def list_vouchers(request):
     vouchers = Voucher.objects.all()
     serializer = VoucherSerializer(vouchers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def kodepos_list(request):
+    kodepos_list = Kodepos.objects.values_list('kodepos', flat=True).distinct()
+    return Response(kodepos_list)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def kelurahan_list(request):
+    kecamatan = request.query_params.get('kecamatan')
+    if kecamatan:
+        kelurahan_list = Kodepos.objects.filter(kecamatan=kecamatan).values_list('kelurahan', flat=True).distinct()
+    else:
+        kelurahan_list = Kodepos.objects.values_list('kelurahan', flat=True).distinct()
+    return Response(kelurahan_list)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def kecamatan_list(request):
+    kota = request.query_params.get('kota')
+    if kota:
+        kecamatan_list = Kodepos.objects.filter(kota=kota).values_list('kecamatan', flat=True).distinct()
+    else:
+        kecamatan_list = Kodepos.objects.values_list('kecamatan', flat=True).distinct()
+    return Response(kecamatan_list)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def kota_list(request):
+    provinsi = request.query_params.get('provinsi')
+    if provinsi:
+        kota_list = Kodepos.objects.filter(provinsi=provinsi).values_list('kota', flat=True).distinct()
+    else:
+        kota_list = Kodepos.objects.values_list('kota', flat=True).distinct()
+    return Response(kota_list)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def provinsi_list(request):
+    provinsi_list = Kodepos.objects.values_list('provinsi', flat=True).distinct()
+    return Response(provinsi_list)
+
+class KodeposDetailView(APIView):
+    def get(self, request):
+        kelurahan = request.query_params.get('kelurahan')
+        kecamatan = request.query_params.get('kecamatan')
+        kota = request.query_params.get('kota')
+        provinsi = request.query_params.get('provinsi')
+        
+        try:
+            kodepos = Kodepos.objects.get(kelurahan=kelurahan, kecamatan=kecamatan, kota=kota, provinsi=provinsi)
+            serializer = KodeposSerializer(kodepos)
+            return Response(serializer.data)
+        except Kodepos.DoesNotExist:
+            return Response({"error": "Kodepos not found"}, status=404)
