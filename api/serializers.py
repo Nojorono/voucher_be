@@ -5,6 +5,7 @@ from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 import random, string
+from datetime import datetime
 
 # Custom Token Serializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -241,7 +242,12 @@ class RetailerRegistrationSerializer(serializers.Serializer):
     ws_name = serializers.CharField(required=True)
     name = serializers.CharField(required=True)
     phone_number = serializers.CharField(required=True)
-    address = serializers.CharField(required=True)
+    address = serializers.CharField(required=False)
+    provinsi = serializers.CharField(required=False)
+    kota = serializers.CharField(required=False)
+    kecamatan = serializers.CharField(required=True)
+    kelurahan = serializers.CharField(required=False)
+    expired_at = serializers.DateTimeField(required=False)
     photos = serializers.ListField(
         child=serializers.ImageField(),
         write_only=True,
@@ -252,6 +258,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         write_only=True,
         required=True
     )
+    
 
     def validate(self, data):
         phone_number = data.get('phone_number')
@@ -276,13 +283,18 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         photos = validated_data.pop('photos')
         photo_remarks = validated_data.pop('photo_remarks', [])
         wholesale = validated_data.pop('wholesale')
+        expired_at = validated_data.pop('expired_at', datetime(2025, 7, 3, 23, 59, 59))
 
         # Save retailer
         retailer_data = {
             "name": validated_data["name"],
             "phone_number": validated_data["phone_number"],
             "address": validated_data["address"],
-            "wholesale": wholesale
+            "wholesale": wholesale,
+            "provinsi": validated_data["provinsi"],
+            "kota": validated_data["kota"],
+            "kecamatan": validated_data["kecamatan"],
+            "kelurahan": validated_data["kelurahan"]
         }
         retailer = Retailer.objects.create(**retailer_data)
 
@@ -293,7 +305,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
         # Generate and save voucher
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-        Voucher.objects.create(code=voucher_code, retailer=retailer)
+        Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
 
         return {
             "voucher_code": voucher_code,

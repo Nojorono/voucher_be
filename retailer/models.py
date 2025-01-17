@@ -23,7 +23,7 @@ class Voucher(models.Model):
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
     redeemed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expired_at = models.DateTimeField(default=datetime(2025, 7, 3))
+    expired_at = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return self.code
