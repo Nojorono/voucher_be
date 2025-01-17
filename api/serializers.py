@@ -291,10 +291,10 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             "phone_number": validated_data["phone_number"],
             "address": validated_data["address"],
             "wholesale": wholesale,
-            "provinsi": validated_data["provinsi"],
-            "kota": validated_data["kota"],
             "kecamatan": validated_data["kecamatan"],
-            "kelurahan": validated_data["kelurahan"]
+            "kelurahan": validated_data["kelurahan"],
+            "kota": validated_data["kota"],
+            "provinsi": validated_data["provinsi"]
         }
         retailer = Retailer.objects.create(**retailer_data)
 
