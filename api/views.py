@@ -241,13 +241,13 @@ def list_vouchers(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def kodepos_list(request):
     kodepos_list = Kodepos.objects.values_list('kodepos', flat=True).distinct()
     return Response(kodepos_list)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def kelurahan_list(request):
     kecamatan = request.query_params.get('kecamatan')
     if kecamatan:
@@ -257,7 +257,7 @@ def kelurahan_list(request):
     return Response(kelurahan_list)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def kecamatan_list(request):
     kota = request.query_params.get('kota')
     if kota:
@@ -267,7 +267,7 @@ def kecamatan_list(request):
     return Response(kecamatan_list)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def kota_list(request):
     provinsi = request.query_params.get('provinsi')
     if provinsi:
@@ -277,7 +277,7 @@ def kota_list(request):
     return Response(kota_list)
     
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def provinsi_list(request):
     provinsi_list = Kodepos.objects.values_list('provinsi', flat=True).distinct()
     return Response(provinsi_list)
