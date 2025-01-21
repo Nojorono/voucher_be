@@ -80,7 +80,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 class WholesaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wholesale
-        fields = ['id', 'name', 'phone_number']
+        fields = ['id', 'name', 'phone_number','is_active']
 
     def validate_phone_number(self, value):
         if value.startswith('0'):
