@@ -18,6 +18,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.db.models import Count
 from datetime import datetime
+import pandas as pd
+from io import BytesIO
+from django.http import HttpResponse
 
 # Custom Token Obtain Pair View
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -302,3 +305,47 @@ class KodeposDetailView(APIView):
             return Response(serializer.data)
         except Kodepos.DoesNotExist:
             return Response({"error": "Kodepos not found"}, status=404)
+
+class ReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self, view_name):
+        if view_name == 'redeem_report':
+            return VoucherRedeem.objects.all()
+        elif view_name == 'list_photos':
+            return RetailerPhoto.objects.all()
+        elif view_name == 'list_vouchers':
+            return Voucher.objects.all()
+        # Add more views as needed
+        return None
+
+    def get_serializer_class(self, view_name):
+        if view_name == 'redeem_report':
+            return VoucherRedeemSerializer
+        elif view_name == 'list_photos':
+            return RetailerPhotoSerializer
+        elif view_name == 'list_vouchers':
+            return VoucherSerializer
+        # Add more serializers as needed
+        return None
+
+    def export_to_excel(self, queryset, serializer_class):
+        serializer = serializer_class(queryset, many=True)
+        df = pd.DataFrame(serializer.data)
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        writer.save()
+        output.seek(0)
+        return output
+
+    def get(self, request, view_name):
+        queryset = self.get_queryset(view_name)
+        serializer_class = self.get_serializer_class(view_name)
+        if queryset is None or serializer_class is None:
+            return Response({"error": "Invalid view name"}, status=status.HTTP_400_BAD_REQUEST)
+
+        output = self.export_to_excel(queryset, serializer_class)
+        response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename={view_name}.xlsx'
+        return response

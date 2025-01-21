@@ -7,6 +7,7 @@ class Wholesale(models.Model):
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True, help_text="Status aktif atau tidaknya wholesales")
 
     def __str__(self):
         return self.name
