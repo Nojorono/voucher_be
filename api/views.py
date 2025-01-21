@@ -239,7 +239,11 @@ def office_verification_report(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_vouchers(request):
-    vouchers = Voucher.objects.all()
+    retailer_id = request.query_params.get('retailer_id')
+    if retailer_id:
+        vouchers = Voucher.objects.filter(retailer_id=retailer_id)
+    else:
+        vouchers = Voucher.objects.all()
     serializer = VoucherSerializer(vouchers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
