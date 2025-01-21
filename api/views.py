@@ -198,12 +198,15 @@ def list_photos(request):
     for photo in photos:
         retailer = photo.retailer
         retailer_id = retailer.id
+        voucher = Voucher.objects.filter(retailer=retailer).first()
+        voucher_code = voucher.code if voucher else None
         if retailer_id not in response_data:
             response_data[retailer_id] = {
                 "retailer_id": retailer_id,
                 "retailer_name": retailer.name,
                 "retailer_phone_number": retailer.phone_number,
                 "retailer_address": retailer.address,
+                "retailer_voucher_code": voucher_code,
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
