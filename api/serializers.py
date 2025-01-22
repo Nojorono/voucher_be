@@ -32,6 +32,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data.update({
             'message': "Login successful",
             'userid': self.user.id,
+            'username': self.user.username,
             'email': self.user.email,
             'is_staff': self.user.is_staff,
             'wholesale': self.user.wholesale_id,
