@@ -21,6 +21,8 @@ from datetime import datetime
 import pandas as pd
 from io import BytesIO
 from django.http import HttpResponse
+import os
+from django.conf import settings
 
 # Custom Token Obtain Pair View
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -56,6 +58,12 @@ class UserViewSet(viewsets.ViewSet):
         request.user.delete()
         return Response({"message": "Profile deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+# Wholesale ViewSet
+class WholesaleViewSet(viewsets.ModelViewSet):
+    queryset = Wholesale.objects.all()
+    serializer_class = WholesaleSerializer
+    permission_classes = [IsAuthenticated]
+
 # Register View
 @api_view(['POST'])
 def register(request):
@@ -64,6 +72,25 @@ def register(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Admin Update User View
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def admin_update_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    serializer = UserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Admin Delete User View
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.delete()
+    return Response({"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 # Change Password View
 @api_view(['POST'])
@@ -96,11 +123,7 @@ def logout(request):
     except Exception:
         return Response({"message": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
-# Wholesale ViewSet
-class WholesaleViewSet(viewsets.ModelViewSet):
-    queryset = Wholesale.objects.all()
-    serializer_class = WholesaleSerializer
-    permission_classes = [IsAuthenticated]
+
 
 # Retailer ViewSet
 class RetailerViewSet(viewsets.ModelViewSet):
@@ -311,7 +334,7 @@ class ReportView(APIView):
 
     def get_queryset(self, view_name):
         if view_name == 'redeem_report':
-            return VoucherRedeem.objects.all()
+            return VoucherRedeem.objects.select_related('voucher', 'wholesaler').all()
         elif view_name == 'list_photos':
             return RetailerPhoto.objects.all()
         elif view_name == 'list_vouchers':
@@ -329,23 +352,35 @@ class ReportView(APIView):
         # Add more serializers as needed
         return None
 
-    def export_to_excel(self, queryset, serializer_class):
+    def export_to_excel(self, queryset, serializer_class, file_path):
         serializer = serializer_class(queryset, many=True)
-        df = pd.DataFrame(serializer.data)
-        output = BytesIO()
-        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        data = serializer.data
+
+        # Modify data for redeem_report to include voucher code
+        if serializer_class == VoucherRedeemSerializer:
+            for item in data:
+                voucher = Voucher.objects.get(pk=item['voucher'])
+                wholesaler = Wholesale.objects.get(pk=item['wholesaler'])
+                item['voucher'] = voucher.code
+                item['wholesaler'] = wholesaler.name
+                item['redeemed_at'] = item['redeemed_at'].split('T')[0]
+                item['retailer'] = voucher.retailer.name
+
+        df = pd.DataFrame(data)
+        writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
         df.to_excel(writer, index=False, sheet_name='Sheet1')
-        writer.save()
-        output.seek(0)
-        return output
+        writer._save()
 
     def get(self, request, view_name):
+        # Access the request object to avoid compile error
+        user = request.user
         queryset = self.get_queryset(view_name)
         serializer_class = self.get_serializer_class(view_name)
         if queryset is None or serializer_class is None:
             return Response({"error": "Invalid view name"}, status=status.HTTP_400_BAD_REQUEST)
 
-        output = self.export_to_excel(queryset, serializer_class)
-        response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename={view_name}.xlsx'
-        return response
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        file_path = os.path.join(settings.MEDIA_ROOT, f'{view_name}-{timestamp}.xlsx')
+        self.export_to_excel(queryset, serializer_class, file_path)
+        
+        return Response({"message": "Report generated successfully", "file_path": file_path}, status=status.HTTP_200_OK)

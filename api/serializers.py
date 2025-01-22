@@ -105,7 +105,7 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoucherRedeem
         fields = ['voucher_code', 'ws_name', 'voucher', 'wholesaler', 'redeemed_at']
-        read_only_fields = ['voucher', 'wholesaler', 'redeemed_at']
+        read_only_fields = ['voucher_code', 'ws_name', 'voucher', 'wholesaler', 'redeemed_at']
 
     def validate(self, data):
         voucher_code = data.get('voucher_code')

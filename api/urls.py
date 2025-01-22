@@ -21,6 +21,9 @@ from .views import (
     kota_list,
     provinsi_list,
     KodeposDetailView,
+    ReportView,
+    admin_update_user,
+    admin_delete_user,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -31,11 +34,13 @@ router = DefaultRouter()
 # router.register(r'users', UserViewSet, basename='user')
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
 router.register(r'retailers', RetailerViewSet, basename='retailer')
-# router.register(r'kodepos', RetailerViewSet, basename='retailer')
+# router.register(r'reports', ReportView, basename='report')
 
 
 urlpatterns = [
     path('user/register/', register, name='register'),
+    path('user/update/<int:user_id>/', admin_update_user, name='admin-update-user'),
+    path('user/delete/<int:user_id>/', admin_delete_user, name='admin-delete-user'),
     path('reset_password/', reset_password, name='reset_password'),
     path('login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
     path('change_password/', change_password, name='change_password'),
@@ -58,6 +63,7 @@ urlpatterns = [
     path('kota/', kota_list, name='kota-list'),
     path('provinsi/', provinsi_list, name='provinsi-list'),
     path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
+    path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
 
     # Include ViewSet routes
     path('', include(router.urls)),
