@@ -72,7 +72,7 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Current password is incorrect.")
         return attrs
 
-    def save(self, **kwargs):
+    def save(self):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.save()
