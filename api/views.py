@@ -160,13 +160,22 @@ class RetailerViewSet(viewsets.ModelViewSet):
         photos.update(is_verified=True, is_approved=False)
         return Response({"message": "All photos for retailer rejected successfully."}, status=status.HTTP_200_OK)
 
-
+from django.core.mail import send_mail
 # Retailer Registration API
 @api_view(['POST'])
 def retailer_register_upload(request):
     serializer = RetailerRegistrationSerializer(data=request.data)
+    
     if serializer.is_valid():
         data = serializer.save()
+
+        # send email notification
+        subject = 'Retailer Registration Notification'
+        message = f"Retailer with ID {data['retailer_id']} has registered successfully, please do verification"
+        email_from = settings.DEFAULT_FROM_EMAIL
+        recipient_list = ['banyu.senjana@limamail.net']
+        send_mail(subject, message, email_from, recipient_list)
+
         return Response({
             "message": "Retailer registered successfully",
             "voucher_code": data["voucher_code"],
