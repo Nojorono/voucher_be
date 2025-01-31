@@ -8,6 +8,7 @@ import random, string
 from datetime import datetime
 from PIL import Image
 from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 # Custom Token Serializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -296,10 +297,12 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             img_size = img_io.tell()
             if img_size <= 500 * 1024:
                 break
-            img = img.resize((int(img.width * 0.9), int(img.height * 0.9)), Image.ANTIALIAS)
+            img = img.resize((int(img.width * 0.9), int(img.height * 0.9)), Image.LANCZOS)
 
         img_io.seek(0)
-        return img_io
+        return InMemoryUploadedFile(
+            img_io, None, image.name, 'image/jpeg', img_io.tell(), None
+        )
 
     def create(self, validated_data):
         photos = validated_data.pop('photos')
