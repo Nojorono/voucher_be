@@ -6,6 +6,8 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 import random, string
 from datetime import datetime
+from PIL import Image
+from io import BytesIO
 
 # Custom Token Serializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -261,7 +263,6 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         write_only=True,
         required=True
     )
-    
 
     def validate(self, data):
         phone_number = data.get('phone_number')
@@ -281,6 +282,24 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Wholesale not found.")
 
         return data
+
+    def compress_image(self, image):
+        img = Image.open(image)
+        img_format = img.format
+        img_io = BytesIO()
+        img.save(img_io, format=img_format, quality=85)
+        img_size = img_io.tell()
+
+        while img_size > 500 * 1024:  # 500 KB
+            img_io = BytesIO()
+            img.save(img_io, format=img_format, quality=85)
+            img_size = img_io.tell()
+            if img_size <= 500 * 1024:
+                break
+            img = img.resize((int(img.width * 0.9), int(img.height * 0.9)), Image.ANTIALIAS)
+
+        img_io.seek(0)
+        return img_io
 
     def create(self, validated_data):
         photos = validated_data.pop('photos')
@@ -303,8 +322,9 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
         # Save photos with remarks
         for index, photo in enumerate(photos):
+            compressed_photo = self.compress_image(photo)
             remarks = photo_remarks[index] if index < len(photo_remarks) else ''
-            RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
+            RetailerPhoto.objects.create(retailer=retailer, image=compressed_photo, remarks=remarks)
 
         # Generate and save voucher
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))

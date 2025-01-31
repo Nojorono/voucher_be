@@ -62,7 +62,7 @@ class UserViewSet(viewsets.ViewSet):
 class WholesaleViewSet(viewsets.ModelViewSet):
     queryset = Wholesale.objects.all()
     serializer_class = WholesaleSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
 # Register View
 @api_view(['POST'])
