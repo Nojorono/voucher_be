@@ -6,6 +6,8 @@ from django.db import models
 class Wholesale(models.Model):
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    pic = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True, help_text="Status aktif atau tidaknya wholesales")
 
