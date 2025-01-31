@@ -52,5 +52,15 @@ class Kodepos(models.Model):
         return f"{self.kodepos} - {self.kelurahan}, {self.kecamatan}, {self.kota}"
     
 
+class Item(models.Model):
+    sku = models.CharField(max_length=3, unique=True)
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=50, null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.CharField(max_length=50, null=True, blank=True)
 
-
+    def __str__(self):
+        return self.name

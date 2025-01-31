@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from office.models import User, Kodepos
+from office.models import User, Kodepos, Item
 from wholesales.models import Wholesale, VoucherRedeem
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
@@ -85,7 +85,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 class WholesaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wholesale
-        fields = ['id', 'name', 'phone_number','is_active']
+        fields = ['id', 'name', 'phone_number', 'address', 'pic', 'is_active']
 
     def validate_phone_number(self, value):
         if value.startswith('0'):
@@ -358,6 +358,12 @@ class KodeposSerializer(serializers.ModelSerializer):
     class Meta:
         model = Kodepos
         fields = ['kodepos', 'kelurahan', 'kecamatan', 'kota', 'provinsi']
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ['sku', 'name', 'price', 'is_active']
 
 
 

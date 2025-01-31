@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from office.models import User, Kodepos
+from office.models import User, Kodepos, Item
 from retailer.models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale, VoucherRedeem
 from django.shortcuts import get_object_or_404
@@ -12,7 +12,7 @@ from .serializers import (
     UserSerializer, CustomTokenObtainPairSerializer, ChangePasswordSerializer, WholesaleSerializer, 
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
-    VoucherSerializer, KodeposSerializer
+    VoucherSerializer, KodeposSerializer, ItemSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -392,3 +392,10 @@ class ReportView(APIView):
         self.export_to_excel(queryset, serializer_class, file_path)
         
         return Response({"message": "Report generated successfully", "file_path": file_path}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_items(request):
+    items = Item.objects.all()
+    serializer = ItemSerializer(items, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

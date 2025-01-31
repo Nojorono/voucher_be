@@ -24,6 +24,7 @@ from .views import (
     ReportView,
     admin_update_user,
     admin_delete_user,
+    list_items,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -64,6 +65,7 @@ urlpatterns = [
     path('provinsi/', provinsi_list, name='provinsi-list'),
     path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
     path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
+    path('items/', list_items, name='list-items'),
 
     # Include ViewSet routes
     path('', include(router.urls)),
