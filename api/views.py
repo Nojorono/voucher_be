@@ -228,8 +228,8 @@ def submit_trx_voucher(request):
     except Voucher.DoesNotExist:
         return Response({"error": "Voucher not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if voucher.redeemed:
-        return Response({"error": "Voucher has already been redeemed"}, status=status.HTTP_400_BAD_REQUEST)
+    # if voucher.redeemed:
+    #     return Response({"error": "Voucher has already been redeemed"}, status=status.HTTP_400_BAD_REQUEST)
 
     wholesaler = get_object_or_404(Wholesale, id=wholesaler_id)
 
