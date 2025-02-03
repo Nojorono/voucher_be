@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from office.models import User, Kodepos, Item
-from wholesales.models import Wholesale, VoucherRedeem
+from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -366,4 +366,7 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ['sku', 'name', 'price', 'is_active']
 
 
-
+class WholesaleTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WholesaleTransaction
+        fields = ['ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'image', 'voucher_redeem', 'total_price_after_discount']

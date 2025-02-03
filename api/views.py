@@ -6,13 +6,13 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from office.models import User, Kodepos, Item
 from retailer.models import Retailer, RetailerPhoto, Voucher
-from wholesales.models import Wholesale, VoucherRedeem
+from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction
 from django.shortcuts import get_object_or_404
 from .serializers import (
     UserSerializer, CustomTokenObtainPairSerializer, ChangePasswordSerializer, WholesaleSerializer, 
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
-    VoucherSerializer, KodeposSerializer, ItemSerializer
+    VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -186,11 +186,64 @@ def retailer_register_upload(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def redeem_voucher(request):
-    serializer = VoucherRedeemSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Voucher redeemed successfully"}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    voucher_code = request.data.get('voucher_code')
+    wholesaler_id = request.data.get('wholesaler_id')
+    ryp_qty = request.data.get('ryp_qty')
+    rys_qty = request.data.get('rys_qty')
+    rym_qty = request.data.get('rym_qty')
+    total_price = request.data.get('total_price')
+    total_price_after_discount = request.data.get('total_price_after_discount')
+    image = request.FILES.get('image')
+
+    # Validate required fields
+    if not voucher_code:
+        return Response({"error": "Voucher code is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not wholesaler_id:
+        return Response({"error": "Wholesaler ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if ryp_qty is None:
+        return Response({"error": "ryp_qty is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if rys_qty is None:
+        return Response({"error": "rys_qty is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if rym_qty is None:
+        return Response({"error": "rym_qty is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not total_price:
+        return Response({"error": "total_price is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not total_price_after_discount:
+        return Response({"error": "total_price_after_discount is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not image:
+        return Response({"error": "image is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        voucher = Voucher.objects.get(code=voucher_code)
+    except Voucher.DoesNotExist:
+        return Response({"error": "Voucher not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    wholesaler = get_object_or_404(Wholesale, id=wholesaler_id)
+
+    # Redeem the voucher
+    voucher_redeem = VoucherRedeem.objects.create(voucher=voucher, wholesaler=wholesaler)
+
+    # Update voucher as redeemed
+    voucher.redeemed = 1
+    voucher.save()
+
+    # Save the transaction
+    transaction = WholesaleTransaction.objects.create(
+        ryp_qty=ryp_qty,
+        rys_qty=rys_qty,
+        rym_qty=rym_qty,
+        total_price=total_price,
+        total_price_after_discount=total_price_after_discount, 
+        image=image,
+        voucher_redeem=voucher_redeem,
+        created_by=request.user.username
+    )
+
+    return Response({
+        "message": "Voucher redeemed and transaction saved successfully",
+        "voucher_redeem": VoucherRedeemSerializer(voucher_redeem).data,
+        "transaction": WholesaleTransactionSerializer(transaction).data
+    }, status=status.HTTP_201_CREATED)
 
 # Redeem Report API
 @api_view(['GET'])

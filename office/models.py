@@ -64,3 +64,14 @@ class Item(models.Model):
 
     def __str__(self):
         return self.name
+    
+# Model untuk Reimburse Voucher
+class Reimburse(models.Model):
+    wholesaler = models.ForeignKey('wholesales.Wholesale', on_delete=models.CASCADE)
+    voucher = models.ForeignKey('retailer.Voucher', on_delete=models.CASCADE)
+    reimbursed_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reimburse {self.voucher.code} by {self.wholesaler.name}"
