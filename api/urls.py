@@ -25,6 +25,7 @@ from .views import (
     admin_update_user,
     admin_delete_user,
     list_items,
+    submit_trx_voucher,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -46,6 +47,7 @@ urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
     path('change_password/', change_password, name='change_password'),
     path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
+    path('submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
     path('redeem_report/', redeem_report, name='redeem_report'),
     path('redeem_report/<str:name>/', redeem_report, name='redeem_report'),
     path('list_photos/', list_photos, name='list_photos'),

@@ -186,6 +186,16 @@ def retailer_register_upload(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def redeem_voucher(request):
+    serializer = VoucherRedeemSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Voucher redeemed successfully"}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Submit Transaction Voucher API
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_trx_voucher(request):
     voucher_code = request.data.get('voucher_code')
     wholesaler_id = request.data.get('wholesaler_id')
     ryp_qty = request.data.get('ryp_qty')
