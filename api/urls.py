@@ -26,6 +26,7 @@ from .views import (
     admin_delete_user,
     list_items,
     submit_trx_voucher,
+    submit_reimburse,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -60,6 +61,7 @@ urlpatterns = [
     path('user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),  # Custom route
     path('user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),  # Custom route
     path('user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),  # Custom route
+    path('user/', UserViewSet.as_view({'get': 'list_users'}), name='user-list'),  # Custom route
     path('kodepos/', kodepos_list, name='kodepos-list'),
     path('kelurahan/', kelurahan_list, name='kelurahan-list'),
     path('kecamatan/', kecamatan_list, name='kecamatan-list'),
@@ -68,6 +70,7 @@ urlpatterns = [
     path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
     path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
     path('items/', list_items, name='list-items'),
+    path('submit_reimburse/', submit_reimburse, name='submit_reimburse'),
 
     # Include ViewSet routes
     path('', include(router.urls)),

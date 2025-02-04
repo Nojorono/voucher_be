@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from office.models import User, Kodepos, Item
+from office.models import User, Kodepos, Item, Reimburse
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
@@ -375,3 +375,20 @@ class WholesaleTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WholesaleTransaction
         fields = ['ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
+
+class ReimburseSerializer(serializers.ModelSerializer):
+    voucher_code = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Reimburse
+        fields = ['voucher_code', 'status']
+
+    def create(self, validated_data):
+        voucher_code = validated_data.pop('voucher_code')
+        try:
+            voucher = Voucher.objects.get(code=voucher_code)
+        except Voucher.DoesNotExist:
+            raise serializers.ValidationError("Voucher not found")
+
+        reimburse = Reimburse.objects.create(voucher=voucher, **validated_data)
+        return reimburse

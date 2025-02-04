@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from office.models import User, Kodepos, Item
+from office.models import User, Kodepos, Item, Reimburse
 from retailer.models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction
 from django.shortcuts import get_object_or_404
@@ -12,7 +12,8 @@ from .serializers import (
     UserSerializer, CustomTokenObtainPairSerializer, ChangePasswordSerializer, WholesaleSerializer, 
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
-    VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer
+    VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer,
+    ReimburseSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -57,6 +58,11 @@ class UserViewSet(viewsets.ViewSet):
     def delete_profile(self, request):
         request.user.delete()
         return Response({"message": "Profile deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+    def list_users(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Wholesale ViewSet
 class WholesaleViewSet(viewsets.ModelViewSet):
@@ -234,7 +240,9 @@ def submit_trx_voucher(request):
     wholesaler = get_object_or_404(Wholesale, id=wholesaler_id)
 
     # Redeem the voucher
-    voucher_redeem = VoucherRedeem.objects.create(voucher=voucher, wholesaler=wholesaler)
+    voucher_redeem = VoucherRedeem.objects.get(voucher=voucher, wholesaler=wholesaler)
+    # voucher_id = voucher_redeem.id
+    # print(voucher_redeem)
 
     # # Update voucher as redeemed
     # voucher.redeemed = 1
@@ -465,3 +473,12 @@ def list_items(request):
     items = Item.objects.all()
     serializer = ItemSerializer(items, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_reimburse(request):
+    serializer = ReimburseSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(reimbursed_by=request.user.username)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

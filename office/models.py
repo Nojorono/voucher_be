@@ -67,11 +67,22 @@ class Item(models.Model):
     
 # Model untuk Reimburse Voucher
 class Reimburse(models.Model):
-    wholesaler = models.ForeignKey('wholesales.Wholesale', on_delete=models.CASCADE)
     voucher = models.ForeignKey('retailer.Voucher', on_delete=models.CASCADE)
+    retailer = models.ForeignKey('retailer.Retailer', on_delete=models.CASCADE, null=True, blank=True)
+    wholesaler = models.ForeignKey('wholesales.Wholesale', on_delete=models.CASCADE)
     reimbursed_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.CharField(max_length=50, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    reimbursed_by = models.CharField(max_length=50, null=True, blank=True)
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('inprogress', 'In Progress'),
+        ('closed', 'Closed'),
+    ]
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        help_text="Status Reimburse"
+    )
 
     def __str__(self):
         return f"Reimburse {self.voucher.code} by {self.wholesaler.name}"
