@@ -477,8 +477,55 @@ def list_items(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_reimburse(request):
-    serializer = ReimburseSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(reimbursed_by=request.user.username)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    voucher_codes = request.data.get('voucher_codes')
+    if not voucher_codes or not isinstance(voucher_codes, list):
+        return Response({"error": "Voucher codes must be provided as a list"}, status=status.HTTP_400_BAD_REQUEST)
+
+    responses = []
+    for voucher_code in voucher_codes:
+        try:
+            voucher = Voucher.objects.get(code=voucher_code)
+        except Voucher.DoesNotExist:
+            responses.append({"voucher_code": voucher_code, "error": "Voucher not found"})
+            continue
+
+        # Check if the voucher has already been submitted
+        if Reimburse.objects.filter(voucher=voucher).exists():
+            responses.append({"voucher_code": voucher_code, "error": "This voucher has already been submitted"})
+            continue
+
+        serializer = ReimburseSerializer(data={"voucher_code": voucher_code})
+        if serializer.is_valid():
+            serializer.save(reimbursed_by=request.user.username)
+            responses.append({"voucher_code": voucher_code, "status": "submitted"})
+        else:
+            responses.append({"voucher_code": voucher_code, "error": serializer.errors})
+
+    return Response(responses, status=status.HTTP_201_CREATED)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_reimburse_status(request, pk, new_status):
+    reimburse = get_object_or_404(Reimburse, pk=pk)
+    if new_status not in ['inprogress', 'closed']:
+        return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    reimburse.status = new_status
+    reimburse.save()
+    return Response({"message": f"Reimburse status updated to {new_status}"}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_reimburse(request):
+    status_filter = request.query_params.get('status')
+    id_filter = request.query_params.get('id')
+
+    if status_filter:
+        reimburses = Reimburse.objects.filter(status=status_filter)
+    elif id_filter:
+        reimburses = Reimburse.objects.filter(id=id_filter)
+    else:
+        reimburses = Reimburse.objects.all()
+
+    serializer = ReimburseSerializer(reimburses, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

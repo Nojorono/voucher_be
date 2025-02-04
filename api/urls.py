@@ -27,6 +27,8 @@ from .views import (
     list_items,
     submit_trx_voucher,
     submit_reimburse,
+    update_reimburse_status,
+    list_reimburse,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -71,6 +73,8 @@ urlpatterns = [
     path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
     path('items/', list_items, name='list-items'),
     path('submit_reimburse/', submit_reimburse, name='submit_reimburse'),
+    path('list_reimburse/', list_reimburse, name='list_reimburse'),
+    path('update_reimburse_status/<int:pk>/<str:new_status>/', update_reimburse_status, name='update_reimburse_status'),
 
     # Include ViewSet routes
     path('', include(router.urls)),

@@ -80,7 +80,7 @@ class Reimburse(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='pending',
+        default='open',
         help_text="Status Reimburse"
     )
 
