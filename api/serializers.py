@@ -46,10 +46,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
+    wholesale_name = serializers.CharField(source='wholesale.name', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'email', 'wholesale', 'is_active', 'is_staff']
+        fields = ['id', 'username', 'password', 'email', 'wholesale', 'wholesale_name', 'is_active', 'is_staff']
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
