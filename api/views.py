@@ -236,9 +236,9 @@ def submit_trx_voucher(request):
     # Redeem the voucher
     voucher_redeem = VoucherRedeem.objects.create(voucher=voucher, wholesaler=wholesaler)
 
-    # Update voucher as redeemed
-    voucher.redeemed = 1
-    voucher.save()
+    # # Update voucher as redeemed
+    # voucher.redeemed = 1
+    # voucher.save()
 
     # Save the transaction
     transaction = WholesaleTransaction.objects.create(

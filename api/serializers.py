@@ -128,6 +128,11 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
         except Wholesale.DoesNotExist:
             raise serializers.ValidationError("Invalid wholesaler name.")
 
+        # Validate wholesaler ID matches retailer's wholesaler ID
+        retailer = voucher.retailer
+        if wholesaler.id != retailer.wholesale_id:
+            raise serializers.ValidationError("Wholesaler ID does not match retailer's wholesaler ID.")
+
         # Validate retailer photo verification
         retailer = voucher.retailer
         if not RetailerPhoto.objects.filter(retailer=retailer, is_verified=True).exists():
