@@ -99,6 +99,8 @@ class WholesaleSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.phone_number = self.validate_phone_number(validated_data.get('phone_number', instance.phone_number))
+        instance.address = validated_data.get('address', instance.address)
+        instance.pic = validated_data.get('pic', instance.pic)
         instance.is_active = validated_data.get('is_active', instance.is_active)
         instance.save()
         return instance 
