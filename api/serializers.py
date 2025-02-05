@@ -352,6 +352,7 @@ class VoucherSerializer(serializers.ModelSerializer):
     ryp_qty = serializers.SerializerMethodField()
     rys_qty = serializers.SerializerMethodField()
     rym_qty = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
     total_after_discount = serializers.SerializerMethodField()
     redeemed_at = serializers.DateTimeField(source='voucherredeem_set.first.redeemed_at', read_only=True, default=None)
     reimburse_at = serializers.DateTimeField(source='reimburse_set.first.reimbursed_at', read_only=True, default=None)
@@ -359,7 +360,7 @@ class VoucherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Voucher
-        fields = ['id', 'code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
+        fields = ['id', 'code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
         read_only_fields = ['id', 'created_at']
 
     def get_ryp_qty(self, obj):
@@ -373,6 +374,10 @@ class VoucherSerializer(serializers.ModelSerializer):
     def get_rym_qty(self, obj):
         transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
         return transaction.rym_qty if transaction else 0
+
+    def get_total_price(self, obj):
+        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
+        return transaction.total_price if transaction else 0
 
     def get_total_after_discount(self, obj):
         transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
