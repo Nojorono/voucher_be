@@ -381,13 +381,12 @@ class WholesaleTransactionSerializer(serializers.ModelSerializer):
 
 class ReimburseSerializer(serializers.ModelSerializer):
     voucher_code = serializers.CharField(write_only=True)
-    # voucher_code = serializers.CharField(source='voucher.code', read_only=True)
     wholesaler_name = serializers.CharField(source='wholesaler.name', read_only=True)
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
 
     class Meta:
         model = Reimburse
-        fields = ['id', 'voucher_code', 'wholesaler', 'wholesaler_name', 'retailer', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status']
+        fields = ['id', 'voucher_code', 'wholesaler_name', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status']
 
     def create(self, validated_data):
         voucher_code = validated_data.pop('voucher_code')
@@ -398,8 +397,7 @@ class ReimburseSerializer(serializers.ModelSerializer):
 
         retailer = voucher.retailer  # Assuming Voucher has a foreign key to Retailer
         wholesaler = retailer.wholesale  # Retailer has a foreign key to Wholesale
-
-        # validated_data['wholesaler'] = wholesaler
+        
         reimburse = Reimburse.objects.create(
             voucher=voucher,
             wholesaler=wholesaler,
