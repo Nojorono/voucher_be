@@ -398,9 +398,9 @@ class ReimburseSerializer(serializers.ModelSerializer):
         retailer = voucher.retailer  # Assuming Voucher has a foreign key to Retailer
         wholesaler = retailer.wholesale  # Retailer has a foreign key to Wholesale
 
+        validated_data['wholesaler'] = wholesaler
         reimburse = Reimburse.objects.create(
             voucher=voucher,
-            wholesaler=wholesaler,
             retailer=retailer,
             **validated_data
         )
