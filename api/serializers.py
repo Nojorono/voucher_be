@@ -162,13 +162,13 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
 class RetailerPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RetailerPhoto
-        fields = ['retailer_id', 'id', 'image', 'is_verified', 'is_approved']
+        fields = ['retailer_id', 'id', 'image', 'is_verified', 'is_approved', 'remarks']
 
 # Retailer Serializer
 class RetailerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Retailer
-        fields = ['id', 'name', 'phone_number', 'address', 'wholesale']
+        fields = ['id', 'name', 'phone_number', 'address', 'wholesale', 'kecamatan', 'kelurahan', 'kota', 'provinsi']
 
     def validate_phone_number(self, value):
         if value.startswith('0'):
@@ -357,10 +357,11 @@ class VoucherSerializer(serializers.ModelSerializer):
     redeemed_at = serializers.DateTimeField(source='voucherredeem_set.first.redeemed_at', read_only=True, default=None)
     reimburse_at = serializers.DateTimeField(source='reimburse_set.first.reimbursed_at', read_only=True, default=None)
     reimburse_status = serializers.CharField(source='reimburse_set.first.status', read_only=True, default=None)
+    voucher_code = serializers.CharField(source='code', read_only=True)
 
     class Meta:
         model = Voucher
-        fields = ['id', 'code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
+        fields = ['id', 'voucher_code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
         read_only_fields = ['id', 'created_at']
 
     def get_ryp_qty(self, obj):
@@ -411,7 +412,7 @@ class WholesaleTransactionSerializer(serializers.ModelSerializer):
         fields = ['ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
 
 class ReimburseSerializer(serializers.ModelSerializer):
-    voucher_code = serializers.CharField(write_only=True)
+    voucher_code = serializers.CharField(source='voucher.code', read_only=True)
     wholesaler_name = serializers.CharField(source='wholesaler.name', read_only=True)
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
 
@@ -438,8 +439,45 @@ class ReimburseSerializer(serializers.ModelSerializer):
         return reimburse
     
 class RetailerReportSerializer(serializers.ModelSerializer):
-    wholesale_name = serializers.CharField(source='wholesale.name', read_only=True)
-    retailer_name = serializers.CharField(source='retailer.name', read_only=True)
+    agen_name = serializers.CharField(source='wholesale.name', read_only=True)
+    retailer_name = serializers.CharField(source='name', read_only=True)
+    voucher_code = serializers.SerializerMethodField()
+    retailer_photos = serializers.SerializerMethodField()
+    voucher_status = serializers.SerializerMethodField()
+
+    def get_voucher_code(self, obj):
+        try:
+            voucher = Voucher.objects.get(retailer=obj)
+            voucher_status = Voucher.objects.filter(retailer=obj).first()
+            if voucher_status and not voucher_status.is_approved:
+                return None
+            return voucher.code
+        except Voucher.DoesNotExist:
+            return None
+
+    def get_retailer_photos(self, obj):
+        photos = RetailerPhoto.objects.filter(retailer=obj)
+        return [{'image': photo.image.url, 'remarks': photo.remarks} for photo in photos]
+    
+    def get_voucher_status(self, obj):
+        try:
+            voucher = Voucher.objects.get(retailer=obj)
+            if voucher.redeemed:
+                reimburse = Reimburse.objects.filter(voucher=voucher).first()
+                if reimburse and reimburse.status != 'closed':
+                    return "REIMBURSED"
+                elif reimburse and reimburse.status == 'closed':
+                    return "PAID"
+                return "CLAIMED"
+            else:
+                voucher_status = Voucher.objects.filter(retailer=obj).first()
+                if voucher_status and voucher_status.is_approved:
+                    return "RECEIVED"
+                return "PENDING"
+        except Voucher.DoesNotExist:
+            return "No Voucher"
+
     class Meta:
         model = Retailer
-        fields = ['retailer_name', 'phone_number', 'address', 'wholesale_name']
+        fields = ['agen_name', 'retailer_name', 'phone_number', 'address', 'kelurahan', 'kecamatan', 'kota', 'provinsi',
+                  'voucher_code', 'voucher_status', 'retailer_photos']

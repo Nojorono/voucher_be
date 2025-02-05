@@ -148,11 +148,14 @@ class RetailerViewSet(viewsets.ModelViewSet):
     def verify_photos(self, request, pk=None):
         retailer = self.get_object()
         photos = RetailerPhoto.objects.filter(retailer=retailer)
+        voucher = Voucher.objects.filter(retailer=retailer).first()
         if not photos.exists():
             return Response({"message": "No photos found for this retailer."}, status=status.HTTP_404_NOT_FOUND)
 
         # Mark all photos as verified
         photos.update(is_verified=True, is_approved=True, verified_at=datetime.now())
+        voucher.is_approved = True
+        voucher.save()
         return Response({"message": "All photos for retailer verified successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -291,10 +294,36 @@ def redeem_report(request):
 @permission_classes([IsAuthenticated])
 def list_retailers(request):
     ws_id = request.query_params.get('ws_id')
+    voucher_code = request.query_params.get('voucher_code')
+    voucher_status = request.query_params.get('voucher_status')
+    retailer_name = request.query_params.get('retailer_name')
+    
+
     if ws_id:
         retailers = Retailer.objects.filter(wholesale_id=ws_id)
     else:
         retailers = Retailer.objects.all()
+
+    if retailer_name:
+        retailers = Retailer.objects.filter(name=retailer_name)
+    
+    if voucher_code:
+        retailers = Retailer.objects.filter(voucher__code=voucher_code)
+
+    if voucher_status:
+        if voucher_status.upper() == 'PENDING':
+            retailers = retailers.filter(voucher__is_approved=False, voucher__redeemed=False)
+        elif voucher_status.upper() == 'RECEIVED':
+            retailers = retailers.filter(voucher__is_approved=True, voucher__redeemed=False)
+        elif voucher_status.upper() == 'CLAIMED':
+            retailers = retailers.filter(voucher__is_approved=True, voucher__redeemed=True)
+        elif voucher_status.upper() == 'REIMBURSED':
+            reimbursed_vouchers = Reimburse.objects.exclude(status='closed').values_list('voucher', flat=True)
+            retailers = retailers.filter(voucher__in=reimbursed_vouchers)
+        elif voucher_status.upper() == 'PAID':
+            reimbursed_vouchers = Reimburse.objects.filter(status='closed').values_list('voucher', flat=True)
+            retailers = retailers.filter(voucher__in=reimbursed_vouchers)
+        
     serializer = RetailerReportSerializer(retailers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -304,6 +333,7 @@ def list_retailers(request):
 def list_photos(request):
     is_verified = request.query_params.get('is_verified')
     is_approved = request.query_params.get('is_approved')
+    ws_id = request.query_params.get('ws_id')  
 
     if is_verified is not None:
         photos = RetailerPhoto.objects.filter(is_verified=is_verified)
@@ -311,6 +341,10 @@ def list_photos(request):
         photos = RetailerPhoto.objects.filter(is_approved=is_approved)
     else:
         photos = RetailerPhoto.objects.all()
+
+    if ws_id:  
+        retailers = Retailer.objects.filter(wholesale_id=ws_id)
+        photos = photos.filter(retailer__in=retailers)
 
     if not photos.exists():
         return Response({"message": "No photos found"}, status=status.HTTP_404_NOT_FOUND)
@@ -323,6 +357,7 @@ def list_photos(request):
         voucher_code = voucher.code if voucher else None
         if retailer_id not in response_data:
             response_data[retailer_id] = {
+                "wholesale_name": retailer.wholesale.name,
                 "retailer_id": retailer_id,
                 "retailer_name": retailer.name,
                 "retailer_phone_number": retailer.phone_number,
@@ -525,6 +560,11 @@ def submit_reimburse(request):
             responses.append({"voucher_code": voucher_code, "error": "This voucher has already been submitted"})
             continue
 
+        # Check if the voucher has been redeemed
+        if not voucher.redeemed:
+            responses.append({"voucher_code": voucher_code, "error": "This voucher has not been redeemed"})
+            continue
+
         serializer = ReimburseSerializer(data={"voucher_code": voucher_code})
         if serializer.is_valid():
             serializer.save(reimbursed_by=request.user.username)
@@ -550,6 +590,7 @@ def update_reimburse_status(request, pk, new_status):
 def list_reimburse(request):
     status_filter = request.query_params.get('status')
     id_filter = request.query_params.get('id')
+    voucher_code = request.query_params.get('voucher_code')
 
     if status_filter:
         reimburses = Reimburse.objects.filter(status=status_filter)
@@ -557,6 +598,9 @@ def list_reimburse(request):
         reimburses = Reimburse.objects.filter(id=id_filter)
     else:
         reimburses = Reimburse.objects.all()
+
+    if voucher_code:
+        reimburses = reimburses.filter(voucher__code=voucher_code)
 
     serializer = ReimburseSerializer(reimburses, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

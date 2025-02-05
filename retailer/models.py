@@ -21,6 +21,7 @@ class Retailer(models.Model):
 class Voucher(models.Model):
     code = models.CharField(max_length=20, unique=True)
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
+    is_approved = models.BooleanField(default=False)
     redeemed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expired_at = models.DateTimeField(null=True, blank=True)
