@@ -380,7 +380,8 @@ class WholesaleTransactionSerializer(serializers.ModelSerializer):
         fields = ['ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
 
 class ReimburseSerializer(serializers.ModelSerializer):
-    voucher_code = serializers.CharField(source='voucher.code', read_only=True)
+    voucher_code = serializers.CharField(write_only=True)
+    # voucher_code = serializers.CharField(source='voucher.code', read_only=True)
     wholesaler_name = serializers.CharField(source='wholesaler.name', read_only=True)
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
 
