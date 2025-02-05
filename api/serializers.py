@@ -349,14 +349,34 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 class VoucherSerializer(serializers.ModelSerializer):
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
     wholesaler_name = serializers.CharField(source='retailer.wholesale.name', read_only=True)
+    ryp_qty = serializers.SerializerMethodField()
+    rys_qty = serializers.SerializerMethodField()
+    rym_qty = serializers.SerializerMethodField()
+    total_after_discount = serializers.SerializerMethodField()
     redeemed_at = serializers.DateTimeField(source='voucherredeem_set.first.redeemed_at', read_only=True, default=None)
     reimburse_at = serializers.DateTimeField(source='reimburse_set.first.reimbursed_at', read_only=True, default=None)
     reimburse_status = serializers.CharField(source='reimburse_set.first.status', read_only=True, default=None)
 
     class Meta:
         model = Voucher
-        fields = ['id', 'code', 'wholesaler_name', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
+        fields = ['id', 'code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
         read_only_fields = ['id', 'created_at']
+
+    def get_ryp_qty(self, obj):
+        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
+        return transaction.ryp_qty if transaction else 0
+
+    def get_rys_qty(self, obj):
+        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
+        return transaction.rys_qty if transaction else 0
+
+    def get_rym_qty(self, obj):
+        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
+        return transaction.rym_qty if transaction else 0
+
+    def get_total_after_discount(self, obj):
+        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
+        return transaction.total_price_after_discount if transaction else 0
 
     def create(self, validated_data):
         return Voucher.objects.create(**validated_data)

@@ -351,6 +351,7 @@ def list_vouchers(request):
     retailer_id = request.data.get('retailer_id')
     ws_id = request.data.get('ws_id')
     redeemed = request.data.get('redeemed')
+    voucher_code = request.data.get('voucher_code')
 
     if retailer_id:
         vouchers = Voucher.objects.filter(retailer_id=retailer_id)
@@ -359,6 +360,9 @@ def list_vouchers(request):
         vouchers = Voucher.objects.filter(retailer__in=retailers)
     else:
         vouchers = Voucher.objects.all()
+    
+    if voucher_code is not None:
+        vouchers = Voucher.objects.filter(code=voucher_code)
 
     if redeemed is not None:
         vouchers = vouchers.filter(redeemed=redeemed)
