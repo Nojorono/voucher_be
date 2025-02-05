@@ -269,9 +269,10 @@ def submit_trx_voucher(request):
 # Redeem Report API
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def redeem_report(request, name=None):
-    if name:
-        wholesaler = get_object_or_404(Wholesale, name=name)
+def redeem_report(request):
+    ws_id = request.query_params.get('ws_id')
+    if ws_id:
+        wholesaler = get_object_or_404(Wholesale, id=ws_id)
         redeemed_vouchers = VoucherRedeem.objects.filter(wholesaler=wholesaler)
     else:
         redeemed_vouchers = VoucherRedeem.objects.all()
@@ -347,11 +348,21 @@ def office_verification_report(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_vouchers(request):
-    retailer_id = request.query_params.get('retailer_id')
+    retailer_id = request.data.get('retailer_id')
+    ws_id = request.data.get('ws_id')
+    redeemed = request.data.get('redeemed')
+
     if retailer_id:
         vouchers = Voucher.objects.filter(retailer_id=retailer_id)
+    elif ws_id:
+        retailers = Retailer.objects.filter(wholesale_id=ws_id)
+        vouchers = Voucher.objects.filter(retailer__in=retailers)
     else:
         vouchers = Voucher.objects.all()
+
+    if redeemed is not None:
+        vouchers = vouchers.filter(redeemed=redeemed)
+
     serializer = VoucherSerializer(vouchers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 

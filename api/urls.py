@@ -52,7 +52,6 @@ urlpatterns = [
     path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
     path('submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
     path('redeem_report/', redeem_report, name='redeem_report'),
-    path('redeem_report/<str:name>/', redeem_report, name='redeem_report'),
     path('list_photos/', list_photos, name='list_photos'),
     path('list_vouchers/', list_vouchers, name='list_vouchers'),
     path('office_verification_report/', office_verification_report, name='office_verification_report'),

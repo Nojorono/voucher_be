@@ -347,10 +347,16 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         }
     
 class VoucherSerializer(serializers.ModelSerializer):
+    retailer_name = serializers.CharField(source='retailer.name', read_only=True)
+    wholesaler_name = serializers.CharField(source='retailer.wholesale.name', read_only=True)
+    redeemed_at = serializers.DateTimeField(source='voucherredeem_set.first.redeemed_at', read_only=True, default=None)
+    reimburse_at = serializers.DateTimeField(source='reimburse_set.first.reimbursed_at', read_only=True, default=None)
+    reimburse_status = serializers.CharField(source='reimburse_set.first.status', read_only=True, default=None)
+
     class Meta:
         model = Voucher
-        fields = ['id', 'code', 'retailer', 'redeemed']
-        read_only_fields = ['id', 'retailer', 'redeemed', 'created_at']
+        fields = ['id', 'code', 'wholesaler_name', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
+        read_only_fields = ['id', 'created_at']
 
     def create(self, validated_data):
         return Voucher.objects.create(**validated_data)
