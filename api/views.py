@@ -13,7 +13,7 @@ from .serializers import (
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
     VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer,
-    ReimburseSerializer
+    ReimburseSerializer, RetailerReportSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -286,6 +286,18 @@ def redeem_report(request):
     ]
     return Response({"redeemed_vouchers": data}, status=status.HTTP_200_OK)
 
+# List Retailer
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_retailers(request):
+    ws_id = request.query_params.get('ws_id')
+    if ws_id:
+        retailers = Retailer.objects.filter(wholesale_id=ws_id)
+    else:
+        retailers = Retailer.objects.all()
+    serializer = RetailerReportSerializer(retailers, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 # List Retailer Photos
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -348,10 +360,10 @@ def office_verification_report(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_vouchers(request):
-    retailer_id = request.data.get('retailer_id')
-    ws_id = request.data.get('ws_id')
-    redeemed = request.data.get('redeemed')
-    voucher_code = request.data.get('voucher_code')
+    retailer_id = request.query_params.get('retailer_id')
+    ws_id = request.query_params.get('ws_id')
+    redeemed = request.query_params.get('redeemed')
+    voucher_code = request.query_params.get('voucher_code')
 
     if retailer_id:
         vouchers = Voucher.objects.filter(retailer_id=retailer_id)
@@ -436,6 +448,8 @@ class ReportView(APIView):
             return RetailerPhoto.objects.all()
         elif view_name == 'list_vouchers':
             return Voucher.objects.all()
+        elif view_name == 'list_reimburse':
+            return Reimburse.objects.all()
         # Add more views as needed
         return None
 
@@ -446,6 +460,8 @@ class ReportView(APIView):
             return RetailerPhotoSerializer
         elif view_name == 'list_vouchers':
             return VoucherSerializer
+        elif view_name == 'list_reimburse':
+            return ReimburseSerializer
         # Add more serializers as needed
         return None
 

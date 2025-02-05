@@ -29,6 +29,7 @@ from .views import (
     submit_reimburse,
     update_reimburse_status,
     list_reimburse,
+    list_retailers,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -69,6 +70,7 @@ urlpatterns = [
     path('kota/', kota_list, name='kota-list'),
     path('provinsi/', provinsi_list, name='provinsi-list'),
     path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
+    path('report/list_retailers/', list_retailers, name='list_retailers'),
     path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
     path('items/', list_items, name='list-items'),
     path('submit_reimburse/', submit_reimburse, name='submit_reimburse'),

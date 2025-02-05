@@ -436,3 +436,10 @@ class ReimburseSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return reimburse
+    
+class RetailerReportSerializer(serializers.ModelSerializer):
+    wholesale_name = serializers.CharField(source='wholesale.name', read_only=True)
+    retailer_name = serializers.CharField(source='retailer.name', read_only=True)
+    class Meta:
+        model = Retailer
+        fields = ['retailer_name', 'phone_number', 'address', 'wholesale_name']
