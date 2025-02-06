@@ -125,6 +125,10 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
         except Voucher.DoesNotExist:
             raise serializers.ValidationError("Invalid or already redeemed voucher code.")
 
+        # Validate voucher expiration date
+        if voucher.expired_at < datetime.now():
+            raise serializers.ValidationError("Voucher has expired and cannot be redeemed.")
+
         # Validate wholesaler existence
         try:
             wholesaler = Wholesale.objects.get(name=ws_name)
@@ -137,7 +141,6 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Wholesaler ID does not match retailer's wholesaler ID.")
 
         # Validate retailer photo verification
-        retailer = voucher.retailer
         if not RetailerPhoto.objects.filter(retailer=retailer, is_verified=True).exists():
             raise serializers.ValidationError("Retailer's photos have not been verified yet.")
         elif not RetailerPhoto.objects.filter(retailer=retailer, is_approved=True).exists():
