@@ -424,7 +424,7 @@ class ReimburseSerializer(serializers.ModelSerializer):
         fields = ['id', 'voucher_code', 'wholesaler_name', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status']
 
     def create(self, validated_data):
-        voucher_code = validated_data.pop('voucher_code')
+        voucher_code = self.initial_data.get('voucher_code')
         try:
             voucher = Voucher.objects.get(code=voucher_code)
         except Voucher.DoesNotExist:
