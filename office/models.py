@@ -73,16 +73,16 @@ class Reimburse(models.Model):
     reimbursed_at = models.DateTimeField(auto_now_add=True)
     reimbursed_by = models.CharField(max_length=50, null=True, blank=True)
     STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('inprogress', 'In Progress'),
-        ('closed', 'Closed'),
+        ('waiting', 'Waiting for Payment'),
+        ('completed', 'Payment Completed'),
     ]
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='open',
+        default='waiting',
         help_text="Status Reimburse"
     )
+    completed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Reimburse {self.voucher.code} by {self.wholesaler.name}"

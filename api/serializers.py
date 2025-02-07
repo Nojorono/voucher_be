@@ -467,11 +467,11 @@ class RetailerReportSerializer(serializers.ModelSerializer):
             voucher = Voucher.objects.get(retailer=obj)
             if voucher.redeemed:
                 reimburse = Reimburse.objects.filter(voucher=voucher).first()
-                if reimburse and reimburse.status != 'closed':
-                    return "REIMBURSED"
-                elif reimburse and reimburse.status == 'closed':
-                    return "PAID"
-                return "CLAIMED"
+                if reimburse and reimburse.status == 'waiting':
+                    return "WAITING PAYMENT"
+                elif reimburse and reimburse.status == 'completed':
+                    return "PAYMENT COMPLETED"
+                return "REDEEMED"
             else:
                 voucher_status = Voucher.objects.filter(retailer=obj).first()
                 if voucher_status and voucher_status.is_approved:

@@ -315,12 +315,12 @@ def list_retailers(request):
             retailers = retailers.filter(voucher__is_approved=False, voucher__redeemed=False)
         elif voucher_status.upper() == 'RECEIVED':
             retailers = retailers.filter(voucher__is_approved=True, voucher__redeemed=False)
-        elif voucher_status.upper() == 'CLAIMED':
+        elif voucher_status.upper() == 'REDEEMED':
             retailers = retailers.filter(voucher__is_approved=True, voucher__redeemed=True)
-        elif voucher_status.upper() == 'REIMBURSED':
+        elif voucher_status.upper() == 'WAITING PAYMENT':
             reimbursed_vouchers = Reimburse.objects.exclude(status='closed').values_list('voucher', flat=True)
             retailers = retailers.filter(voucher__in=reimbursed_vouchers)
-        elif voucher_status.upper() == 'PAID':
+        elif voucher_status.upper() == 'PAYMENT COMPLETED':
             reimbursed_vouchers = Reimburse.objects.filter(status='closed').values_list('voucher', flat=True)
             retailers = retailers.filter(voucher__in=reimbursed_vouchers)
         
@@ -578,10 +578,11 @@ def submit_reimburse(request):
 @permission_classes([IsAuthenticated])
 def update_reimburse_status(request, pk, new_status):
     reimburse = get_object_or_404(Reimburse, pk=pk)
-    if new_status not in ['inprogress', 'closed']:
+    if new_status not in ['completed']:
         return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
     
     reimburse.status = new_status
+    reimburse.completed_at = datetime.now()
     reimburse.save()
     return Response({"message": f"Reimburse status updated to {new_status}"}, status=status.HTTP_200_OK)
 
