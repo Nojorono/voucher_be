@@ -179,10 +179,10 @@ def retailer_register_upload(request):
     if serializer.is_valid():
         data = serializer.save()
         # send email notification
-        subject = f'Retailer {request.data['name']} Registration Notification'
+        subject = f'Retailer Registration Notification'
         message = f"Retailer with Name {request.data['name']} has registered successfully, please do verification"
         email_from = settings.DEFAULT_FROM_EMAIL
-        recipient_list = ['dimas.rosadi@limamail.net','banyu.senjana@limamail.net']
+        recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
         send_mail(subject, message, email_from, recipient_list)
 
         return Response({
