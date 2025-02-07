@@ -181,7 +181,7 @@ def retailer_register_upload(request):
         subject = 'Retailer Registration Notification'
         message = f"Retailer with Name {request.data['name']} has registered successfully, please do verification"
         email_from = settings.DEFAULT_FROM_EMAIL
-        recipient_list = ['dimas.rosadi@limamail.net']
+        recipient_list = ['dimas.rosadi@limamail.net','banyu.senjana@limamail.net']
         send_mail(subject, message, email_from, recipient_list)
 
         return Response({
