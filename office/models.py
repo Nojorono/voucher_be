@@ -53,7 +53,7 @@ class Kodepos(models.Model):
     
 
 class Item(models.Model):
-    sku = models.CharField(max_length=3, unique=True)
+    sku = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
