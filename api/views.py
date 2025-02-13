@@ -281,6 +281,7 @@ def list_photos(request):
     filters = {
         'is_verified': request.query_params.get('is_verified'),
         'is_approved': request.query_params.get('is_approved'),
+        'is_rejected': request.query_params.get('is_rejected'),
         'retailer__wholesale_id': request.query_params.get('ws_id')
     }
     filters = {k: v for k, v in filters.items() if v is not None}
@@ -309,6 +310,7 @@ def list_photos(request):
             "image": photo.image.url,
             "is_verified": photo.is_verified,
             "is_approved": photo.is_approved,
+            "is_rejected": photo.is_rejected,
             "remarks": photo.remarks,
         })
 
