@@ -1,5 +1,5 @@
 # Revised views.py
-from rest_framework import status, viewsets, mixins, generics
+from rest_framework import status, viewsets, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
@@ -20,9 +20,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.db.models import Count
 from datetime import datetime
 import pandas as pd
-from io import BytesIO
-from django.http import HttpResponse
-import os
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -130,8 +127,6 @@ def logout(request):
     except Exception:
         return Response({"message": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 # Retailer ViewSet
 class RetailerViewSet(viewsets.ModelViewSet):
     queryset = Retailer.objects.all()
@@ -163,13 +158,15 @@ class RetailerViewSet(viewsets.ModelViewSet):
     def reject_photos(self, request, pk=None):
         retailer = self.get_object()
         photos = RetailerPhoto.objects.filter(retailer=retailer)
+        voucher = Voucher.objects.filter(retailer=retailer).first()
         if not photos.exists():
             return Response({"message": "No photos found for this retailer."}, status=status.HTTP_404_NOT_FOUND)
 
         # Mark all photos as rejected
-        photos.update(is_verified=True, is_approved=False)
+        photos.update(is_verified=True, is_approved=False, is_rejected=True, verified_at=datetime.now())
+        voucher.is_rejected = True
+        voucher.save()
         return Response({"message": "All photos for retailer rejected successfully."}, status=status.HTTP_200_OK)
-
 
 # Retailer Registration API
 @api_view(['POST'])
@@ -206,60 +203,23 @@ def redeem_voucher(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_trx_voucher(request):
-    voucher_code = request.data.get('voucher_code')
-    wholesaler_id = request.data.get('wholesaler_id')
-    ryp_qty = request.data.get('ryp_qty')
-    rys_qty = request.data.get('rys_qty')
-    rym_qty = request.data.get('rym_qty')
-    total_price = request.data.get('total_price')
-    total_price_after_discount = request.data.get('total_price_after_discount')
-    image = request.FILES.get('image')
+    required_fields = ['voucher_code', 'wholesaler_id', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_price_after_discount', 'image']
+    for field in required_fields:
+        if not request.data.get(field):
+            return Response({"error": f"{field} is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Validate required fields
-    if not voucher_code:
-        return Response({"error": "Voucher code is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if not wholesaler_id:
-        return Response({"error": "Wholesaler ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if ryp_qty is None:
-        return Response({"error": "ryp_qty is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if rys_qty is None:
-        return Response({"error": "rys_qty is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if rym_qty is None:
-        return Response({"error": "rym_qty is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if not total_price:
-        return Response({"error": "total_price is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if not total_price_after_discount:
-        return Response({"error": "total_price_after_discount is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if not image:
-        return Response({"error": "image is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        voucher = Voucher.objects.get(code=voucher_code)
-    except Voucher.DoesNotExist:
-        return Response({"error": "Voucher not found"}, status=status.HTTP_404_NOT_FOUND)
+    voucher = get_object_or_404(Voucher, code=request.data['voucher_code'])
+    wholesaler = get_object_or_404(Wholesale, id=request.data['wholesaler_id'])
 
-    # if voucher.redeemed:
-    #     return Response({"error": "Voucher has already been redeemed"}, status=status.HTTP_400_BAD_REQUEST)
-
-    wholesaler = get_object_or_404(Wholesale, id=wholesaler_id)
-
-    # Redeem the voucher
     voucher_redeem = VoucherRedeem.objects.get(voucher=voucher, wholesaler=wholesaler)
-    # voucher_id = voucher_redeem.id
-    # print(voucher_redeem)
-
-    # # Update voucher as redeemed
-    # voucher.redeemed = 1
-    # voucher.save()
-
-    # Save the transaction
+    
     transaction = WholesaleTransaction.objects.create(
-        ryp_qty=ryp_qty,
-        rys_qty=rys_qty,
-        rym_qty=rym_qty,
-        total_price=total_price,
-        total_price_after_discount=total_price_after_discount, 
-        image=image,
+        ryp_qty=request.data['ryp_qty'],
+        rys_qty=request.data['rys_qty'],
+        rym_qty=request.data['rym_qty'],
+        total_price=request.data['total_price'],
+        total_price_after_discount=request.data['total_price_after_discount'], 
+        image=request.FILES['image'],
         voucher_redeem=voucher_redeem,
         created_by=request.user.username
     )
@@ -275,11 +235,7 @@ def submit_trx_voucher(request):
 @permission_classes([IsAuthenticated])
 def redeem_report(request):
     ws_id = request.query_params.get('ws_id')
-    if ws_id:
-        wholesaler = get_object_or_404(Wholesale, id=ws_id)
-        redeemed_vouchers = VoucherRedeem.objects.filter(wholesaler=wholesaler)
-    else:
-        redeemed_vouchers = VoucherRedeem.objects.all()
+    redeemed_vouchers = VoucherRedeem.objects.filter(wholesaler_id=ws_id) if ws_id else VoucherRedeem.objects.all()
 
     data = [
         {
@@ -294,36 +250,26 @@ def redeem_report(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_retailers(request):
-    ws_id = request.query_params.get('ws_id')
-    voucher_code = request.query_params.get('voucher_code')
+    filters = {
+        'wholesale_id': request.query_params.get('ws_id'),
+        'voucher__code': request.query_params.get('voucher_code'),
+        'name': request.query_params.get('retailer_name')
+    }
+    filters = {k: v for k, v in filters.items() if v}
+
+    retailers = Retailer.objects.filter(**filters)
+
     voucher_status = request.query_params.get('voucher_status')
-    retailer_name = request.query_params.get('retailer_name')
-    
-
-    if ws_id:
-        retailers = Retailer.objects.filter(wholesale_id=ws_id)
-    else:
-        retailers = Retailer.objects.all()
-
-    if retailer_name:
-        retailers = Retailer.objects.filter(name=retailer_name)
-    
-    if voucher_code:
-        retailers = Retailer.objects.filter(voucher__code=voucher_code)
-
     if voucher_status:
-        if voucher_status.upper() == 'PENDING':
-            retailers = retailers.filter(voucher__is_approved=False, voucher__redeemed=False)
-        elif voucher_status.upper() == 'RECEIVED':
-            retailers = retailers.filter(voucher__is_approved=True, voucher__redeemed=False)
-        elif voucher_status.upper() == 'REDEEMED':
-            retailers = retailers.filter(voucher__is_approved=True, voucher__redeemed=True)
-        elif voucher_status.upper() == 'WAITING PAYMENT':
-            reimbursed_vouchers = Reimburse.objects.exclude(status='closed').values_list('voucher', flat=True)
-            retailers = retailers.filter(voucher__in=reimbursed_vouchers)
-        elif voucher_status.upper() == 'PAYMENT COMPLETED':
-            reimbursed_vouchers = Reimburse.objects.filter(status='closed').values_list('voucher', flat=True)
-            retailers = retailers.filter(voucher__in=reimbursed_vouchers)
+        status_filters = {
+            'PENDING': {'voucher__is_approved': False, 'voucher__redeemed': False},
+            'REJECTED': {'voucher__is_rejected': True, 'voucher__redeemed': False},
+            'RECEIVED': {'voucher__is_approved': True, 'voucher__redeemed': False},
+            'REDEEMED': {'voucher__is_approved': True, 'voucher__redeemed': True},
+            'WAITING PAYMENT': {'voucher__in': Reimburse.objects.exclude(status='closed').values_list('voucher', flat=True)},
+            'PAYMENT COMPLETED': {'voucher__in': Reimburse.objects.filter(status='closed').values_list('voucher', flat=True)}
+        }
+        retailers = retailers.filter(**status_filters.get(voucher_status.upper(), {}))
         
     serializer = RetailerReportSerializer(retailers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -332,21 +278,14 @@ def list_retailers(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_photos(request):
-    is_verified = request.query_params.get('is_verified')
-    is_approved = request.query_params.get('is_approved')
-    ws_id = request.query_params.get('ws_id')  
+    filters = {
+        'is_verified': request.query_params.get('is_verified'),
+        'is_approved': request.query_params.get('is_approved'),
+        'retailer__wholesale_id': request.query_params.get('ws_id')
+    }
+    filters = {k: v for k, v in filters.items() if v is not None}
 
-    if is_verified is not None:
-        photos = RetailerPhoto.objects.filter(is_verified=is_verified)
-    elif is_approved is not None:
-        photos = RetailerPhoto.objects.filter(is_approved=is_approved)
-    else:
-        photos = RetailerPhoto.objects.all()
-
-    if ws_id:  
-        retailers = Retailer.objects.filter(wholesale_id=ws_id)
-        photos = photos.filter(retailer__in=retailers)
-
+    photos = RetailerPhoto.objects.filter(**filters)
     if not photos.exists():
         return Response({"message": "No photos found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -375,16 +314,6 @@ def list_photos(request):
 
     return Response(list(response_data.values()), status=status.HTTP_200_OK)
 
-# Verify Photo View
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def verify_photo(request):
-#     serializer = RetailerPhotoVerificationSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#         return Response({"message": "Photo verified successfully"}, status=status.HTTP_200_OK)
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 # Office Verification Report View
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -396,124 +325,98 @@ def office_verification_report(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_vouchers(request):
-    retailer_id = request.query_params.get('retailer_id')
-    ws_id = request.query_params.get('ws_id')
-    redeemed = request.query_params.get('redeemed')
-    voucher_code = request.query_params.get('voucher_code')
+    filters = {
+        'retailer_id': request.query_params.get('retailer_id'),
+        'retailer__wholesale_id': request.query_params.get('ws_id'),
+        'code': request.query_params.get('voucher_code'),
+        'redeemed': request.query_params.get('redeemed')
+    }
+    filters = {k: v for k, v in filters.items() if v is not None}
 
-    if retailer_id:
-        vouchers = Voucher.objects.filter(retailer_id=retailer_id)
-    elif ws_id:
-        retailers = Retailer.objects.filter(wholesale_id=ws_id)
-        vouchers = Voucher.objects.filter(retailer__in=retailers)
-    else:
-        vouchers = Voucher.objects.all()
-    
-    if voucher_code is not None:
-        vouchers = Voucher.objects.filter(code=voucher_code)
-
-    if redeemed is not None:
-        vouchers = vouchers.filter(redeemed=redeemed)
-
+    vouchers = Voucher.objects.filter(**filters)
     serializer = VoucherSerializer(vouchers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 def kodepos_list(request):
     kodepos_list = Kodepos.objects.values_list('kodepos', flat=True).distinct()
     return Response(kodepos_list)
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 def kelurahan_list(request):
     kecamatan = request.query_params.get('kecamatan')
-    if kecamatan:
-        kelurahan_list = Kodepos.objects.filter(kecamatan=kecamatan).values_list('kelurahan', flat=True).distinct()
-    else:
-        kelurahan_list = Kodepos.objects.values_list('kelurahan', flat=True).distinct()
+    kelurahan_list = Kodepos.objects.filter(kecamatan=kecamatan).values_list('kelurahan', flat=True).distinct() if kecamatan else Kodepos.objects.values_list('kelurahan', flat=True).distinct()
     return Response(kelurahan_list)
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 def kecamatan_list(request):
     kota = request.query_params.get('kota')
-    if kota:
-        kecamatan_list = Kodepos.objects.filter(kota=kota).values_list('kecamatan', flat=True).distinct()
-    else:
-        kecamatan_list = Kodepos.objects.values_list('kecamatan', flat=True).distinct()
+    kecamatan_list = Kodepos.objects.filter(kota=kota).values_list('kecamatan', flat=True).distinct() if kota else Kodepos.objects.values_list('kecamatan', flat=True).distinct()
     return Response(kecamatan_list)
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 def kota_list(request):
     provinsi = request.query_params.get('provinsi')
-    if provinsi:
-        kota_list = Kodepos.objects.filter(provinsi=provinsi).values_list('kota', flat=True).distinct()
-    else:
-        kota_list = Kodepos.objects.values_list('kota', flat=True).distinct()
+    kota_list = Kodepos.objects.filter(provinsi=provinsi).values_list('kota', flat=True).distinct() if provinsi else Kodepos.objects.values_list('kota', flat=True).distinct()
     return Response(kota_list)
-    
+
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 def provinsi_list(request):
     provinsi_list = Kodepos.objects.values_list('provinsi', flat=True).distinct()
     return Response(provinsi_list)
 
 class KodeposDetailView(APIView):
     def get(self, request):
-        kelurahan = request.query_params.get('kelurahan')
-        kecamatan = request.query_params.get('kecamatan')
-        kota = request.query_params.get('kota')
-        provinsi = request.query_params.get('provinsi')
-        
+        filters = {
+            'kelurahan': request.query_params.get('kelurahan'),
+            'kecamatan': request.query_params.get('kecamatan'),
+            'kota': request.query_params.get('kota'),
+            'provinsi': request.query_params.get('provinsi')
+        }
+        filters = {k: v for k, v in filters.items() if v is not None}
+
         try:
-            kodepos = Kodepos.objects.get(kelurahan=kelurahan, kecamatan=kecamatan, kota=kota, provinsi=provinsi)
+            kodepos = Kodepos.objects.get(**filters)
             serializer = KodeposSerializer(kodepos)
             return Response(serializer.data)
         except Kodepos.DoesNotExist:
-            return Response({"error": "Kodepos not found"}, status=404)
+            return Response({"error": "Kodepos not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class ReportView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self, view_name):
-        if view_name == 'redeem_report':
-            return VoucherRedeem.objects.select_related('voucher', 'wholesaler').all()
-        elif view_name == 'list_photos':
-            return RetailerPhoto.objects.all()
-        elif view_name == 'list_vouchers':
-            return Voucher.objects.all()
-        elif view_name == 'list_reimburse':
-            return Reimburse.objects.all()
-        # Add more views as needed
-        return None
+        view_map = {
+            'redeem_report': VoucherRedeem.objects.select_related('voucher', 'wholesaler').all(),
+            'list_photos': RetailerPhoto.objects.all(),
+            'list_vouchers': Voucher.objects.all(),
+            'list_reimburse': Reimburse.objects.all()
+        }
+        return view_map.get(view_name)
 
     def get_serializer_class(self, view_name):
-        if view_name == 'redeem_report':
-            return VoucherRedeemSerializer
-        elif view_name == 'list_photos':
-            return RetailerPhotoSerializer
-        elif view_name == 'list_vouchers':
-            return VoucherSerializer
-        elif view_name == 'list_reimburse':
-            return ReimburseSerializer
-        # Add more serializers as needed
-        return None
+        serializer_map = {
+            'redeem_report': VoucherRedeemSerializer,
+            'list_photos': RetailerPhotoSerializer,
+            'list_vouchers': VoucherSerializer,
+            'list_reimburse': ReimburseSerializer
+        }
+        return serializer_map.get(view_name)
 
     def export_to_excel(self, queryset, serializer_class, file_path):
         serializer = serializer_class(queryset, many=True)
         data = serializer.data
 
-        # Modify data for redeem_report to include voucher code
         if serializer_class == VoucherRedeemSerializer:
             for item in data:
                 voucher = Voucher.objects.get(pk=item['voucher'])
                 wholesaler = Wholesale.objects.get(pk=item['wholesaler'])
-                item['voucher'] = voucher.code
-                item['wholesaler'] = wholesaler.name
-                item['redeemed_at'] = item['redeemed_at'].split('T')[0]
-                item['retailer'] = voucher.retailer.name
+                item.update({
+                    'voucher': voucher.code,
+                    'wholesaler': wholesaler.name,
+                    'redeemed_at': item['redeemed_at'].split('T')[0],
+                    'retailer': voucher.retailer.name
+                })
 
         df = pd.DataFrame(data)
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
@@ -521,11 +424,9 @@ class ReportView(APIView):
         writer._save()
 
     def get(self, request, view_name):
-        # Access the request object to avoid compile error
-        user = request.user
         queryset = self.get_queryset(view_name)
         serializer_class = self.get_serializer_class(view_name)
-        if queryset is None or serializer_class is None:
+        if not queryset or not serializer_class:
             return Response({"error": "Invalid view name"}, status=status.HTTP_400_BAD_REQUEST)
 
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -556,12 +457,10 @@ def submit_reimburse(request):
             responses.append({"voucher_code": voucher_code, "error": "Voucher not found"})
             continue
 
-        # Check if the voucher has already been submitted
         if Reimburse.objects.filter(voucher=voucher).exists():
             responses.append({"voucher_code": voucher_code, "error": "This voucher has already been submitted"})
             continue
 
-        # Check if the voucher has been redeemed
         if not voucher.redeemed:
             responses.append({"voucher_code": voucher_code, "error": "This voucher has not been redeemed"})
             continue
@@ -578,10 +477,10 @@ def submit_reimburse(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_reimburse_status(request, pk, new_status):
-    reimburse = get_object_or_404(Reimburse, pk=pk)
     if new_status not in ['completed']:
         return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
     
+    reimburse = get_object_or_404(Reimburse, pk=pk)
     reimburse.status = new_status
     reimburse.completed_at = datetime.now()
     reimburse.save()
@@ -590,19 +489,13 @@ def update_reimburse_status(request, pk, new_status):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_reimburse(request):
-    status_filter = request.query_params.get('status')
-    id_filter = request.query_params.get('id')
-    voucher_code = request.query_params.get('voucher_code')
+    filters = {
+        'status': request.query_params.get('status'),
+        'id': request.query_params.get('id'),
+        'voucher__code': request.query_params.get('voucher_code')
+    }
+    filters = {k: v for k, v in filters.items() if v is not None}
 
-    if status_filter:
-        reimburses = Reimburse.objects.filter(status=status_filter)
-    elif id_filter:
-        reimburses = Reimburse.objects.filter(id=id_filter)
-    else:
-        reimburses = Reimburse.objects.all()
-
-    if voucher_code:
-        reimburses = reimburses.filter(voucher__code=voucher_code)
-
+    reimburses = Reimburse.objects.filter(**filters)
     serializer = ReimburseSerializer(reimburses, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

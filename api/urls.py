@@ -54,10 +54,8 @@ schema_view = get_schema_view(
 )
 
 router = DefaultRouter()
-# router.register(r'users', UserViewSet, basename='user')
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
 router.register(r'retailers', RetailerViewSet, basename='retailer')
-# router.register(r'reports', ReportView, basename='report')
 
 
 urlpatterns = [

@@ -14,24 +14,14 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
-
         wholesale_data = {}
-
-        # Include additional wholesale details if applicable
         if hasattr(self.user, 'wholesale_id') and self.user.wholesale_id:
-            try:
-                wholesale = Wholesale.objects.get(id=self.user.wholesale_id)
+            wholesale = Wholesale.objects.filter(id=self.user.wholesale_id).first()
+            if wholesale:
                 wholesale_data = {
                     'name': wholesale.name,
                     'phone_number': wholesale.phone_number
                 }
-            except Wholesale.DoesNotExist:
-                wholesale_data = {
-                    'name': None,
-                    'phone_number': None
-                }
-                
-        # Add custom fields to the response
         data.update({
             'message': "Login successful",
             'userid': self.user.id,
@@ -39,7 +29,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'email': self.user.email,
             'is_staff': self.user.is_staff,
             'wholesale': self.user.wholesale_id,
-            **wholesale_data  # Tambahkan data wholesale
+            **wholesale_data
         })
         return data
 
@@ -89,22 +79,18 @@ class WholesaleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'phone_number', 'address', 'pic', 'is_active']
 
     def validate_phone_number(self, value):
-        if value.startswith('0'):
-            value = '62' + value[1:]
-        return value
+        return '62' + value[1:] if value.startswith('0') else value
 
     def create(self, validated_data):
         return Wholesale.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.phone_number = self.validate_phone_number(validated_data.get('phone_number', instance.phone_number))
-        instance.address = validated_data.get('address', instance.address)
-        instance.pic = validated_data.get('pic', instance.pic)
-        instance.is_active = validated_data.get('is_active', instance.is_active)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.phone_number = self.validate_phone_number(instance.phone_number)
         instance.save()
-        return instance 
-    
+        return instance
+
 # Voucher Redeem Serializer
 class VoucherRedeemSerializer(serializers.ModelSerializer):
     voucher_code = serializers.CharField(write_only=True)
@@ -113,37 +99,27 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoucherRedeem
         fields = ['voucher_code', 'ws_name', 'voucher', 'wholesaler', 'redeemed_at']
-        read_only_fields = ['voucher_code', 'ws_name', 'voucher', 'wholesaler', 'redeemed_at']
+        read_only_fields = ['voucher', 'wholesaler', 'redeemed_at']
 
     def validate(self, data):
         voucher_code = data.get('voucher_code')
         ws_name = data.get('ws_name')
 
-        # Validate voucher existence and availability
-        try:
-            voucher = Voucher.objects.get(code=voucher_code, redeemed=False)
-        except Voucher.DoesNotExist:
+        voucher = Voucher.objects.filter(code=voucher_code, redeemed=False).first()
+        if not voucher:
             raise serializers.ValidationError("Invalid or already redeemed voucher code.")
-
-        # Validate voucher expiration date
         if voucher.expired_at < datetime.now():
             raise serializers.ValidationError("Voucher has expired and cannot be redeemed.")
 
-        # Validate wholesaler existence
-        try:
-            wholesaler = Wholesale.objects.get(name=ws_name)
-        except Wholesale.DoesNotExist:
+        wholesaler = Wholesale.objects.filter(name=ws_name).first()
+        if not wholesaler:
             raise serializers.ValidationError("Invalid wholesaler name.")
-
-        # Validate wholesaler ID matches retailer's wholesaler ID
-        retailer = voucher.retailer
-        if wholesaler.id != retailer.wholesale_id:
+        if wholesaler.id != voucher.retailer.wholesale_id:
             raise serializers.ValidationError("Wholesaler ID does not match retailer's wholesaler ID.")
 
-        # Validate retailer photo verification
-        if not RetailerPhoto.objects.filter(retailer=retailer, is_verified=True).exists():
+        if not RetailerPhoto.objects.filter(retailer=voucher.retailer, is_verified=True).exists():
             raise serializers.ValidationError("Retailer's photos have not been verified yet.")
-        elif not RetailerPhoto.objects.filter(retailer=retailer, is_approved=True).exists():
+        if not RetailerPhoto.objects.filter(retailer=voucher.retailer, is_approved=True).exists():
             raise serializers.ValidationError("Retailer's photos have been rejected.")
 
         data['voucher'] = voucher
@@ -152,15 +128,10 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         voucher = validated_data['voucher']
-        wholesaler = validated_data['wholesaler']
-
-        # Mark voucher as redeemed
         voucher.redeemed = True
         voucher.save()
+        return VoucherRedeem.objects.create(**validated_data)
 
-        # Save redemption record
-        return VoucherRedeem.objects.create(voucher=voucher, wholesaler=wholesaler)
-    
 # Retailer Photo Serializer
 class RetailerPhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -174,42 +145,30 @@ class RetailerSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'phone_number', 'address', 'wholesale', 'kecamatan', 'kelurahan', 'kota', 'provinsi']
 
     def validate_phone_number(self, value):
-        if value.startswith('0'):
-            value = '62' + value[1:]
-        return value
+        return '62' + value[1:] if value.startswith('0') else value
 
     def create(self, validated_data):
         return Retailer.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.phone_number = self.validate_phone_number(validated_data.get('phone_number', instance.phone_number))
-        instance.address = validated_data.get('address', instance.address)
-        instance.wholesale = validated_data.get('wholesale', instance.wholesale)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.phone_number = self.validate_phone_number(instance.phone_number)
         instance.save()
         return instance
-    
+
 # Retailer Photo Verification Serializer
 class RetailerPhotoVerificationSerializer(serializers.Serializer):
     retailer_id = serializers.IntegerField(required=True)
     photo_id = serializers.IntegerField(required=True)
 
     def validate(self, data):
-        retailer_id = data.get('retailer_id')
-        photo_id = data.get('photo_id')
-
-        # Validate retailer existence
-        try:
-            retailer = Retailer.objects.get(id=retailer_id)
-        except Retailer.DoesNotExist:
+        retailer = Retailer.objects.filter(id=data.get('retailer_id')).first()
+        if not retailer:
             raise serializers.ValidationError("Retailer not found.")
-
-        # Validate photo existence
-        try:
-            photo = RetailerPhoto.objects.get(id=photo_id, retailer=retailer)
-        except RetailerPhoto.DoesNotExist:
+        photo = RetailerPhoto.objects.filter(id=data.get('photo_id'), retailer=retailer).first()
+        if not photo:
             raise serializers.ValidationError("Photo not found.")
-
         data['retailer'] = retailer
         data['photo'] = photo
         return data
@@ -218,7 +177,6 @@ class RetailerPhotoVerificationSerializer(serializers.Serializer):
         photo = self.validated_data['photo']
         photo.is_verified = True
         photo.save()
-
         return photo
 
 # Retailer Photo Rejection Serializer
@@ -227,21 +185,12 @@ class RetailerPhotoRejectionSerializer(serializers.Serializer):
     photo_id = serializers.IntegerField(required=True)
 
     def validate(self, data):
-        retailer_id = data.get('retailer_id')
-        photo_id = data.get('photo_id')
-
-        # Validate retailer existence
-        try:
-            retailer = Retailer.objects.get(id=retailer_id)
-        except Retailer.DoesNotExist:
+        retailer = Retailer.objects.filter(id=data.get('retailer_id')).first()
+        if not retailer:
             raise serializers.ValidationError("Retailer not found.")
-
-        # Validate photo existence
-        try:
-            photo = RetailerPhoto.objects.get(id=photo_id, retailer=retailer)
-        except RetailerPhoto.DoesNotExist:
+        photo = RetailerPhoto.objects.filter(id=data.get('photo_id'), retailer=retailer).first()
+        if not photo:
             raise serializers.ValidationError("Photo not found.")
-
         data['retailer'] = retailer
         data['photo'] = photo
         return data
@@ -250,9 +199,7 @@ class RetailerPhotoRejectionSerializer(serializers.Serializer):
         photo = self.validated_data['photo']
         photo.is_verified = False
         photo.save()
-
         return photo
-    
 
 # Retailer Registration Serializer
 class RetailerRegistrationSerializer(serializers.Serializer):
@@ -278,21 +225,19 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
     def validate(self, data):
         phone_number = data.get('phone_number')
+        data['phone_number'] = '62' + phone_number[1:] if phone_number.startswith('0') else phone_number
 
-        # Format phone number
-        if phone_number.startswith('0'):
-            data['phone_number'] = '62' + phone_number[1:]
+        existing_retailer = Retailer.objects.filter(phone_number=data['phone_number']).first()
+        if existing_retailer:
+            voucher_rejected = Voucher.objects.filter(retailer=existing_retailer, is_rejected=True).exists()
+            # photo_rejected = RetailerPhoto.objects.filter(retailer=existing_retailer, is_rejected=True).exists()
+            if not voucher_rejected:
+                raise serializers.ValidationError("Phone number is already registered.")
 
-        # Check if phone number already exists
-        if Retailer.objects.filter(phone_number=data['phone_number']).exists():
-            raise serializers.ValidationError("Phone number is already registered.")
-
-        # Validate wholesale existence
-        try:
-            data['wholesale'] = Wholesale.objects.get(name=data['ws_name'])
-        except Wholesale.DoesNotExist:
+        wholesale = Wholesale.objects.filter(name=data['ws_name']).first()
+        if not wholesale:
             raise serializers.ValidationError("Wholesale not found.")
-
+        data['wholesale'] = wholesale
         return data
 
     def compress_image(self, image):
@@ -319,28 +264,24 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         photos = validated_data.pop('photos')
         photo_remarks = validated_data.pop('photo_remarks', [])
         wholesale = validated_data.pop('wholesale')
-        expired_at = validated_data.pop('expired_at', datetime(2025, 7, 3, 23, 59, 59))
+        expired_at = validated_data.pop('expired_at', datetime(2025, 7, 2, 23, 59, 59))
 
-        # Save retailer
-        retailer_data = {
-            "name": validated_data["name"],
-            "phone_number": validated_data["phone_number"],
-            "address": validated_data["address"],
-            "wholesale": wholesale,
-            "kecamatan": validated_data["kecamatan"],
-            "kelurahan": validated_data["kelurahan"],
-            "kota": validated_data["kota"],
-            "provinsi": validated_data["provinsi"]
-        }
-        retailer = Retailer.objects.create(**retailer_data)
+        retailer = Retailer.objects.create(
+            name=validated_data["name"],
+            phone_number=validated_data["phone_number"],
+            address=validated_data.get("address"),
+            wholesale=wholesale,
+            kecamatan=validated_data["kecamatan"],
+            kelurahan=validated_data.get("kelurahan"),
+            kota=validated_data.get("kota"),
+            provinsi=validated_data.get("provinsi")
+        )
 
-        # Save photos with remarks
         for index, photo in enumerate(photos):
             compressed_photo = self.compress_image(photo)
             remarks = photo_remarks[index] if index < len(photo_remarks) else ''
             RetailerPhoto.objects.create(retailer=retailer, image=compressed_photo, remarks=remarks)
 
-        # Generate and save voucher
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
 
@@ -348,7 +289,8 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             "voucher_code": voucher_code,
             "retailer_id": retailer.id
         }
-    
+
+# Voucher Serializer
 class VoucherSerializer(serializers.ModelSerializer):
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
     wholesaler_name = serializers.CharField(source='retailer.wholesale.name', read_only=True)
@@ -367,53 +309,53 @@ class VoucherSerializer(serializers.ModelSerializer):
         fields = ['id', 'voucher_code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
         read_only_fields = ['id', 'created_at']
 
-    def get_ryp_qty(self, obj):
+    def get_transaction_field(self, obj, field):
         transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
-        return transaction.ryp_qty if transaction else 0
+        return getattr(transaction, field, 0) if transaction else 0
+
+    def get_ryp_qty(self, obj):
+        return self.get_transaction_field(obj, 'ryp_qty')
 
     def get_rys_qty(self, obj):
-        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
-        return transaction.rys_qty if transaction else 0
+        return self.get_transaction_field(obj, 'rys_qty')
 
     def get_rym_qty(self, obj):
-        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
-        return transaction.rym_qty if transaction else 0
+        return self.get_transaction_field(obj, 'rym_qty')
 
     def get_total_price(self, obj):
-        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
-        return transaction.total_price if transaction else 0
+        return self.get_transaction_field(obj, 'total_price')
 
     def get_total_after_discount(self, obj):
-        transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
-        return transaction.total_price_after_discount if transaction else 0
+        return self.get_transaction_field(obj, 'total_price_after_discount')
 
     def create(self, validated_data):
         return Voucher.objects.create(**validated_data)
-    
+
     def update(self, instance, validated_data):
-        instance.code = validated_data.get('code', instance.code)
-        instance.retailer = validated_data.get('retailer', instance.retailer)
-        instance.redeemed = validated_data.get('redeemed', instance.redeemed)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         instance.save()
         return instance
-    
+
+# Kodepos Serializer
 class KodeposSerializer(serializers.ModelSerializer):
     class Meta:
         model = Kodepos
         fields = ['kodepos', 'kelurahan', 'kecamatan', 'kota', 'provinsi']
 
-
+# Item Serializer
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = ['sku', 'name', 'price', 'is_active']
 
-
+# Wholesale Transaction Serializer
 class WholesaleTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WholesaleTransaction
         fields = ['ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
 
+# Reimburse Serializer
 class ReimburseSerializer(serializers.ModelSerializer):
     voucher_code = serializers.CharField(source='voucher.code', read_only=True)
     wholesaler_name = serializers.CharField(source='wholesaler.name', read_only=True)
@@ -425,22 +367,21 @@ class ReimburseSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         voucher_code = self.initial_data.get('voucher_code')
-        try:
-            voucher = Voucher.objects.get(code=voucher_code)
-        except Voucher.DoesNotExist:
+        voucher = Voucher.objects.filter(code=voucher_code).first()
+        if not voucher:
             raise serializers.ValidationError("Voucher not found")
 
-        retailer = voucher.retailer  # Assuming Voucher has a foreign key to Retailer
-        wholesaler = retailer.wholesale  # Retailer has a foreign key to Wholesale
-        
-        reimburse = Reimburse.objects.create(
+        retailer = voucher.retailer
+        wholesaler = retailer.wholesale
+
+        return Reimburse.objects.create(
             voucher=voucher,
             wholesaler=wholesaler,
             retailer=retailer,
             **validated_data
         )
-        return reimburse
-    
+
+# Retailer Report Serializer
 class RetailerReportSerializer(serializers.ModelSerializer):
     agen_name = serializers.CharField(source='wholesale.name', read_only=True)
     retailer_name = serializers.CharField(source='name', read_only=True)
@@ -449,36 +390,27 @@ class RetailerReportSerializer(serializers.ModelSerializer):
     voucher_status = serializers.SerializerMethodField()
 
     def get_voucher_code(self, obj):
-        try:
-            voucher = Voucher.objects.get(retailer=obj)
-            voucher_status = Voucher.objects.filter(retailer=obj).first()
-            if voucher_status and not voucher_status.is_approved:
-                return None
+        voucher = Voucher.objects.filter(retailer=obj).first()
+        if voucher and voucher.is_approved:
             return voucher.code
-        except Voucher.DoesNotExist:
-            return None
+        return None
 
     def get_retailer_photos(self, obj):
         photos = RetailerPhoto.objects.filter(retailer=obj)
         return [{'image': photo.image.url, 'remarks': photo.remarks} for photo in photos]
-    
+
     def get_voucher_status(self, obj):
-        try:
-            voucher = Voucher.objects.get(retailer=obj)
-            if voucher.redeemed:
-                reimburse = Reimburse.objects.filter(voucher=voucher).first()
-                if reimburse and reimburse.status == 'waiting':
-                    return "WAITING PAYMENT"
-                elif reimburse and reimburse.status == 'completed':
-                    return "PAYMENT COMPLETED"
-                return "REDEEMED"
-            else:
-                voucher_status = Voucher.objects.filter(retailer=obj).first()
-                if voucher_status and voucher_status.is_approved:
-                    return "RECEIVED"
-                return "PENDING"
-        except Voucher.DoesNotExist:
+        voucher = Voucher.objects.filter(retailer=obj).first()
+        if not voucher:
             return "No Voucher"
+        if voucher.is_rejected:
+            return "REJECTED"
+        if voucher.redeemed:
+            reimburse = Reimburse.objects.filter(voucher=voucher).first()
+            if reimburse:
+                return "WAITING PAYMENT" if reimburse.status == 'waiting' else "PAYMENT COMPLETED"
+            return "REDEEMED"
+        return "RECEIVED" if voucher.is_approved else "PENDING"
 
     class Meta:
         model = Retailer
