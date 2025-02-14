@@ -13,7 +13,7 @@ from .serializers import (
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
     VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer,
-    ReimburseSerializer, RetailerReportSerializer
+    ReimburseSerializer, RetailerReportSerializer, WholesaleTransactionDetailSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -519,7 +519,12 @@ def list_reimburse(request):
         if 'voucher_code' in reimburse:
             transactions = WholesaleTransaction.objects.filter(voucher_redeem__voucher__code=reimburse.get('voucher_code'))
             transaction_serializer = WholesaleTransactionSerializer(transactions, many=True)
-            print(transactions)
             reimburse['transactions'] = transaction_serializer.data
+
+            for transaction in reimburse['transactions']:
+                transaction_id = transaction['id']
+                transaction_details = WholesaleTransactionDetail.objects.filter(transaction_id=transaction_id)
+                transaction_detail_serializer = WholesaleTransactionDetailSerializer(transaction_details, many=True)
+                transaction['details'] = transaction_detail_serializer.data
 
     return Response(reimburse_data, status=status.HTTP_200_OK)

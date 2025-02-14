@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from office.models import User, Kodepos, Item, Reimburse
-from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction
+from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -346,7 +346,8 @@ class ItemSerializer(serializers.ModelSerializer):
 class WholesaleTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WholesaleTransaction
-        fields = ['total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
+        fields = ['id','total_price', 'image', 'total_price_after_discount']
+        read_only_fields = ['id', 'created_at']
 
 # Reimburse Serializer
 class ReimburseSerializer(serializers.ModelSerializer):
@@ -409,3 +410,11 @@ class RetailerReportSerializer(serializers.ModelSerializer):
         model = Retailer
         fields = ['agen_name', 'retailer_name', 'phone_number', 'address', 'kelurahan', 'kecamatan', 'kota', 'provinsi',
                   'voucher_code', 'voucher_status', 'retailer_photos']
+
+
+class WholesaleTransactionDetailSerializer(serializers.ModelSerializer):
+    item_name = serializers.CharField(source='item.name', read_only=True)
+    
+    class Meta:
+        model = WholesaleTransactionDetail
+        fields = ['item_name', 'qty', 'sub_total']
