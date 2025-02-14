@@ -340,7 +340,7 @@ class KodeposSerializer(serializers.ModelSerializer):
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ['sku', 'name', 'price', 'is_active']
+        fields = ['id', 'sku', 'name', 'price', 'is_active']
 
 # Wholesale Transaction Serializer
 class WholesaleTransactionSerializer(serializers.ModelSerializer):
