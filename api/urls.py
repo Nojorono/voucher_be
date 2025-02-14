@@ -30,6 +30,7 @@ from .views import (
     update_reimburse_status,
     list_reimburse,
     list_retailers,
+    # list_trx_voucher,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -69,6 +70,7 @@ urlpatterns = [
     path('change_password/', change_password, name='change_password'),
     path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
     path('submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
+    # path('list_redeem_voucher/', list_trx_voucher, name='list_trx_voucher'),
     path('redeem_report/', redeem_report, name='redeem_report'),
     path('list_photos/', list_photos, name='list_photos'),
     path('list_vouchers/', list_vouchers, name='list_vouchers'),

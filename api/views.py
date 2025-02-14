@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from office.models import User, Kodepos, Item, Reimburse
 from retailer.models import Retailer, RetailerPhoto, Voucher
-from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction
+from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from django.shortcuts import get_object_or_404
 from .serializers import (
     UserSerializer, CustomTokenObtainPairSerializer, ChangePasswordSerializer, WholesaleSerializer, 
@@ -22,6 +22,7 @@ from datetime import datetime
 import pandas as pd
 from django.conf import settings
 from django.core.mail import send_mail
+import json
 
 # Custom Token Obtain Pair View
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -203,26 +204,38 @@ def redeem_voucher(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_trx_voucher(request):
-    required_fields = ['voucher_code', 'wholesaler_id', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_price_after_discount', 'image']
+    required_fields = ['voucher_code', 'ws_id', 'total_price', 'total_price_after_discount', 'image', 'items']
     for field in required_fields:
         if not request.data.get(field):
             return Response({"error": f"{field} is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     voucher = get_object_or_404(Voucher, code=request.data['voucher_code'])
-    wholesaler = get_object_or_404(Wholesale, id=request.data['wholesaler_id'])
+    wholesaler = get_object_or_404(Wholesale, id=request.data['ws_id'])
+
+    # Check if the voucher has already been submitted
+    if WholesaleTransaction.objects.filter(voucher_redeem__voucher=voucher, voucher_redeem__wholesaler=wholesaler).exists():
+        return Response({"error": "This voucher has already been submitted"}, status=status.HTTP_400_BAD_REQUEST)
 
     voucher_redeem = VoucherRedeem.objects.get(voucher=voucher, wholesaler=wholesaler)
     
     transaction = WholesaleTransaction.objects.create(
-        ryp_qty=request.data['ryp_qty'],
-        rys_qty=request.data['rys_qty'],
-        rym_qty=request.data['rym_qty'],
         total_price=request.data['total_price'],
         total_price_after_discount=request.data['total_price_after_discount'], 
         image=request.FILES['image'],
         voucher_redeem=voucher_redeem,
         created_by=request.user.username
     )
+    items = request.data.get('items', [])
+    if isinstance(items, str):
+        items = json.loads(items)
+    for item_data in items:
+        item = get_object_or_404(Item, id=item_data['item_id'])
+        WholesaleTransactionDetail.objects.create(
+            transaction=transaction,
+            item=item,
+            qty=item_data['qty'],
+            sub_total=item_data['sub_total']
+        )
 
     return Response({
         "message": "Voucher redeemed and transaction saved successfully",
@@ -499,5 +512,14 @@ def list_reimburse(request):
     filters = {k: v for k, v in filters.items() if v is not None}
 
     reimburses = Reimburse.objects.filter(**filters)
-    serializer = ReimburseSerializer(reimburses, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    reimburse_serializer = ReimburseSerializer(reimburses, many=True)
+    reimburse_data = reimburse_serializer.data
+    
+    for reimburse in reimburse_data:
+        if 'voucher_code' in reimburse:
+            transactions = WholesaleTransaction.objects.filter(voucher_redeem__voucher__code=reimburse.get('voucher_code'))
+            transaction_serializer = WholesaleTransactionSerializer(transactions, many=True)
+            print(transactions)
+            reimburse['transactions'] = transaction_serializer.data
+
+    return Response(reimburse_data, status=status.HTTP_200_OK)

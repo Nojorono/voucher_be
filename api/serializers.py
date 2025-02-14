@@ -76,7 +76,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 class WholesaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wholesale
-        fields = ['id', 'name', 'phone_number', 'address', 'pic', 'is_active']
+        fields = ['id', 'name', 'phone_number', 'address', 'city', 'pic', 'is_active']
 
     def validate_phone_number(self, value):
         return '62' + value[1:] if value.startswith('0') else value
@@ -94,16 +94,16 @@ class WholesaleSerializer(serializers.ModelSerializer):
 # Voucher Redeem Serializer
 class VoucherRedeemSerializer(serializers.ModelSerializer):
     voucher_code = serializers.CharField(write_only=True)
-    ws_name = serializers.CharField(write_only=True)
+    ws_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = VoucherRedeem
-        fields = ['voucher_code', 'ws_name', 'voucher', 'wholesaler', 'redeemed_at']
+        fields = ['voucher_code', 'ws_id', 'voucher', 'wholesaler', 'redeemed_at']
         read_only_fields = ['voucher', 'wholesaler', 'redeemed_at']
 
     def validate(self, data):
         voucher_code = data.get('voucher_code')
-        ws_name = data.get('ws_name')
+        ws_id = data.get('ws_id')
 
         voucher = Voucher.objects.filter(code=voucher_code, redeemed=False).first()
         if not voucher:
@@ -111,15 +111,15 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
         if voucher.expired_at < datetime.now():
             raise serializers.ValidationError("Voucher has expired and cannot be redeemed.")
 
-        wholesaler = Wholesale.objects.filter(name=ws_name).first()
+        wholesaler = Wholesale.objects.filter(id=ws_id).first()
         if not wholesaler:
-            raise serializers.ValidationError("Invalid wholesaler name.")
+            raise serializers.ValidationError("Invalid wholesaler ID.")
         if wholesaler.id != voucher.retailer.wholesale_id:
             raise serializers.ValidationError("Wholesaler ID does not match retailer's wholesaler ID.")
 
         if not RetailerPhoto.objects.filter(retailer=voucher.retailer, is_verified=True).exists():
             raise serializers.ValidationError("Retailer's photos have not been verified yet.")
-        if not RetailerPhoto.objects.filter(retailer=voucher.retailer, is_approved=True).exists():
+        if RetailerPhoto.objects.filter(retailer=voucher.retailer, is_approved=False).exists():
             raise serializers.ValidationError("Retailer's photos have been rejected.")
 
         data['voucher'] = voucher
@@ -128,9 +128,14 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         voucher = validated_data['voucher']
+        wholesaler = validated_data['wholesaler']
         voucher.redeemed = True
         voucher.save()
-        return VoucherRedeem.objects.create(**validated_data)
+        return VoucherRedeem.objects.create(
+            voucher=voucher,
+            wholesaler=wholesaler,
+            redeemed_at=datetime.now()
+        )
 
 # Retailer Photo Serializer
 class RetailerPhotoSerializer(serializers.ModelSerializer):
@@ -294,9 +299,6 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 class VoucherSerializer(serializers.ModelSerializer):
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
     wholesaler_name = serializers.CharField(source='retailer.wholesale.name', read_only=True)
-    ryp_qty = serializers.SerializerMethodField()
-    rys_qty = serializers.SerializerMethodField()
-    rym_qty = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
     total_after_discount = serializers.SerializerMethodField()
     redeemed_at = serializers.DateTimeField(source='voucherredeem_set.first.redeemed_at', read_only=True, default=None)
@@ -306,21 +308,12 @@ class VoucherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Voucher
-        fields = ['id', 'voucher_code', 'wholesaler_name', 'ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
+        fields = ['id', 'voucher_code', 'wholesaler_name', 'total_price', 'total_after_discount', 'retailer_name', 'redeemed', 'redeemed_at', 'reimburse_at', 'reimburse_status']
         read_only_fields = ['id', 'created_at']
 
     def get_transaction_field(self, obj, field):
         transaction = WholesaleTransaction.objects.filter(voucher_redeem__voucher=obj).first()
         return getattr(transaction, field, 0) if transaction else 0
-
-    def get_ryp_qty(self, obj):
-        return self.get_transaction_field(obj, 'ryp_qty')
-
-    def get_rys_qty(self, obj):
-        return self.get_transaction_field(obj, 'rys_qty')
-
-    def get_rym_qty(self, obj):
-        return self.get_transaction_field(obj, 'rym_qty')
 
     def get_total_price(self, obj):
         return self.get_transaction_field(obj, 'total_price')
@@ -353,7 +346,7 @@ class ItemSerializer(serializers.ModelSerializer):
 class WholesaleTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = WholesaleTransaction
-        fields = ['ryp_qty', 'rys_qty', 'rym_qty', 'total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
+        fields = ['total_price', 'image', 'voucher_redeem', 'total_price_after_discount']
 
 # Reimburse Serializer
 class ReimburseSerializer(serializers.ModelSerializer):
