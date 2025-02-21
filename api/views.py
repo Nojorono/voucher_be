@@ -535,8 +535,18 @@ def list_reimburse(request):
         if 'voucher_code' in reimburse:
             transactions = WholesaleTransaction.objects.filter(voucher_redeem__voucher__code=reimburse.get('voucher_code'))
             transaction_serializer = WholesaleTransactionSerializer(transactions, many=True)
+            
+            # Add retailer address details
+            voucher = Voucher.objects.filter(code=reimburse.get('voucher_code')).first()
+            if voucher and voucher.retailer:
+                retailer = voucher.retailer
+                reimburse['retailer_address'] = retailer.address
+                reimburse['retailer_kelurahan'] = retailer.kelurahan
+                reimburse['retailer_kecamatan'] = retailer.kecamatan
+                reimburse['retailer_kota'] = retailer.kota
+                reimburse['retailer_provinsi'] = retailer.provinsi
+                
             reimburse['transactions'] = transaction_serializer.data
-
             for transaction in reimburse['transactions']:
                 transaction_id = transaction['id']
                 transaction_details = WholesaleTransactionDetail.objects.filter(transaction_id=transaction_id)
