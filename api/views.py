@@ -177,8 +177,22 @@ def retailer_register_upload(request):
     if serializer.is_valid():
         data = serializer.save()
         # send email notification
-        subject = f'Retailer Registration Notification'
-        message = f"Retailer with Name {request.data['name']} has registered successfully, please do verification"
+        subject = f'Verifikasi Retailer'
+        message = f"""
+        Dear Admin,
+
+        Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.
+
+        Nama Retailer        : {request.data['name']}
+        No WhatsApp          : {request.data['phone_number']}
+        Nama Agen            : {request.data['agent_name']}
+        Tanggal Pengisian    : {datetime.now().strftime('%Y-%m-%d')}
+        Status               : Menunggu Verifikasi
+
+        Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:
+
+        Verifikasi Sekarang: http://10.0.29.49:81/verification
+        """
         email_from = settings.DEFAULT_FROM_EMAIL
         recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
         send_mail(subject, message, email_from, recipient_list)
