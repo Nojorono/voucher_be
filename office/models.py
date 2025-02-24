@@ -74,7 +74,8 @@ class Reimburse(models.Model):
     reimbursed_by = models.CharField(max_length=50, null=True, blank=True)
     STATUS_CHOICES = [
         ('waiting', 'Waiting for Payment'),
-        ('completed', 'Payment Completed'),
+        ('completed', 'Reimburse Completed'),
+        ('paid', 'Paid'),
     ]
     status = models.CharField(
         max_length=20,
