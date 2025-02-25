@@ -1,10 +1,11 @@
 # Revised views.py
-from rest_framework import status, viewsets, generics
+from rest_framework import viewsets, generics
+from rest_framework import status as http_status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from office.models import User, Kodepos, Item, Reimburse
+from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus
 from retailer.models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from django.shortcuts import get_object_or_404
@@ -45,23 +46,23 @@ class UserViewSet(viewsets.ViewSet):
             data['wholesale_name'] = wholesale_serializer.data['name']
             data['wholesale_phone_number'] = wholesale_serializer.data['phone_number']
 
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(data, status=http_status.HTTP_200_OK)
 
     def update_profile(self, request):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=http_status.HTTP_200_OK)
+        return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
     def delete_profile(self, request):
         request.user.delete()
-        return Response({"message": "Profile deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Profile deleted successfully"}, status=http_status.HTTP_204_NO_CONTENT)
     
     def list_users(self, request):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=http_status.HTTP_200_OK)
 
 # Wholesale ViewSet
 class WholesaleViewSet(viewsets.ModelViewSet):
@@ -75,8 +76,8 @@ def register(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=http_status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Admin Update User View
 @api_view(['PUT'])
@@ -86,8 +87,8 @@ def admin_update_user(request, user_id):
     serializer = UserSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=http_status.HTTP_200_OK)
+    return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Admin Delete User View
 @api_view(['DELETE'])
@@ -95,7 +96,7 @@ def admin_update_user(request, user_id):
 def admin_delete_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.delete()
-    return Response({"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    return Response({"message": "User deleted successfully"}, status=http_status.HTTP_204_NO_CONTENT)
 
 # Change Password View
 @api_view(['POST'])
@@ -104,8 +105,8 @@ def change_password(request):
     serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         serializer.save()
-        return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Password changed successfully"}, status=http_status.HTTP_200_OK)
+    return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Reset Password View
 @api_view(['POST'])
@@ -113,8 +114,8 @@ def reset_password(request):
     user = User.objects.filter(email=request.data.get('email')).first()
     if user:
         # Logic to reset password (send email or reset token)
-        return Response({"message": "Reset password link sent"}, status=status.HTTP_200_OK)
-    return Response({"message": "Email not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "Reset password link sent"}, status=http_status.HTTP_200_OK)
+    return Response({"message": "Email not found"}, status=http_status.HTTP_404_NOT_FOUND)
 
 # Logout View
 @api_view(['POST'])
@@ -124,9 +125,9 @@ def logout(request):
         refresh_token = request.data.get("refresh")
         token = RefreshToken(refresh_token)
         token.blacklist()
-        return Response({"message": "Logout successful"}, status=status.HTTP_205_RESET_CONTENT)
+        return Response({"message": "Logout successful"}, status=http_status.HTTP_205_RESET_CONTENT)
     except Exception:
-        return Response({"message": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Invalid token"}, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Retailer ViewSet
 class RetailerViewSet(viewsets.ModelViewSet):
@@ -139,7 +140,7 @@ class RetailerViewSet(viewsets.ModelViewSet):
         retailer = self.get_object()
         photos = RetailerPhoto.objects.filter(retailer=retailer)
         serializer = RetailerPhotoSerializer(photos, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=http_status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def verify_photos(self, request, pk=None):
@@ -147,13 +148,14 @@ class RetailerViewSet(viewsets.ModelViewSet):
         photos = RetailerPhoto.objects.filter(retailer=retailer)
         voucher = Voucher.objects.filter(retailer=retailer).first()
         if not photos.exists():
-            return Response({"message": "No photos found for this retailer."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "No photos found for this retailer."}, status=http_status.HTTP_404_NOT_FOUND)
 
         # Mark all photos as verified
-        photos.update(is_verified=True, is_approved=True, verified_at=datetime.now())
+        photos.update(is_verified=True, is_approved=True, verified_at=datetime.now(), approved_at=datetime.now())
         voucher.is_approved = True
+        voucher.approved_at = datetime.now()
         voucher.save()
-        return Response({"message": "All photos for retailer verified successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "All photos for retailer verified successfully."}, status=http_status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def reject_photos(self, request, pk=None):
@@ -161,13 +163,14 @@ class RetailerViewSet(viewsets.ModelViewSet):
         photos = RetailerPhoto.objects.filter(retailer=retailer)
         voucher = Voucher.objects.filter(retailer=retailer).first()
         if not photos.exists():
-            return Response({"message": "No photos found for this retailer."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "No photos found for this retailer."}, status=http_status.HTTP_404_NOT_FOUND)
 
         # Mark all photos as rejected
-        photos.update(is_verified=True, is_approved=False, is_rejected=True, verified_at=datetime.now())
+        photos.update(is_verified=True, is_approved=False, is_rejected=True, verified_at=datetime.now(), rejected_at=datetime.now())
         voucher.is_rejected = True
+        voucher.rejected_at = datetime.now()
         voucher.save()
-        return Response({"message": "All photos for retailer rejected successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "All photos for retailer rejected successfully."}, status=http_status.HTTP_200_OK)
 
 # Retailer Registration API
 @api_view(['POST'])
@@ -203,8 +206,8 @@ def retailer_register_upload(request):
             "message": "Retailer registered successfully",
             "voucher_code": data["voucher_code"],
             "retailer_id": data["retailer_id"]
-        }, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        }, status=http_status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Redeem Voucher API
 @api_view(['POST'])
@@ -213,8 +216,8 @@ def redeem_voucher(request):
     serializer = VoucherRedeemSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response({"message": "Voucher redeemed successfully"}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Voucher redeemed successfully"}, status=http_status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Submit Transaction Voucher API
 @api_view(['POST'])
@@ -223,14 +226,14 @@ def submit_trx_voucher(request):
     required_fields = ['voucher_code', 'ws_id', 'total_price', 'total_price_after_discount', 'image', 'items']
     for field in required_fields:
         if not request.data.get(field):
-            return Response({"error": f"{field} is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"{field} is required"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     voucher = get_object_or_404(Voucher, code=request.data['voucher_code'])
     wholesaler = get_object_or_404(Wholesale, id=request.data['ws_id'])
 
     # Check if the voucher has already been submitted
     if WholesaleTransaction.objects.filter(voucher_redeem__voucher=voucher, voucher_redeem__wholesaler=wholesaler).exists():
-        return Response({"error": "This voucher has already been submitted"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "This voucher has already been submitted"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     voucher_redeem = VoucherRedeem.objects.get(voucher=voucher, wholesaler=wholesaler)
     
@@ -257,7 +260,7 @@ def submit_trx_voucher(request):
         "message": "Voucher redeemed and transaction saved successfully",
         "voucher_redeem": VoucherRedeemSerializer(voucher_redeem).data,
         "transaction": WholesaleTransactionSerializer(transaction).data
-    }, status=status.HTTP_201_CREATED)
+    }, status=http_status.HTTP_201_CREATED)
 
 # Redeem Report API
 @api_view(['GET'])
@@ -273,7 +276,7 @@ def redeem_report(request):
             "wholesaler": voucher.wholesaler.name
         } for voucher in redeemed_vouchers
     ]
-    return Response({"redeemed_vouchers": data}, status=status.HTTP_200_OK)
+    return Response({"redeemed_vouchers": data}, status=http_status.HTTP_200_OK)
 
 # List Retailer
 @api_view(['GET'])
@@ -295,13 +298,14 @@ def list_retailers(request):
             'REJECTED': {'voucher__is_rejected': True, 'voucher__redeemed': False},
             'RECEIVED': {'voucher__is_approved': True, 'voucher__redeemed': False},
             'REDEEMED': {'voucher__is_approved': True, 'voucher__redeemed': True},
-            'WAITING PAYMENT': {'voucher__in': Reimburse.objects.exclude(status='closed').values_list('voucher', flat=True)},
-            'PAYMENT COMPLETED': {'voucher__in': Reimburse.objects.filter(status='closed').values_list('voucher', flat=True)}
+            'WAITING REIMBURSE': {'voucher__in': Reimburse.objects.filter(status='waiting').values_list('voucher', flat=True)},
+            'REIMBURSE COMPLETED': {'voucher__in': Reimburse.objects.filter(status='completed').values_list('voucher', flat=True)},
+            'REIMBURSE PAID': {'voucher__in': Reimburse.objects.filter(status='paid').values_list('voucher', flat=True)}
         }
         retailers = retailers.filter(**status_filters.get(voucher_status.upper(), {}))
         
     serializer = RetailerReportSerializer(retailers, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=http_status.HTTP_200_OK)
 
 # List Retailer Photos
 @api_view(['GET'])
@@ -317,7 +321,7 @@ def list_photos(request):
 
     photos = RetailerPhoto.objects.filter(**filters)
     if not photos.exists():
-        return Response({"message": "No photos found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "No photos found"}, status=http_status.HTTP_404_NOT_FOUND)
 
     response_data = {}
     for photo in photos:
@@ -343,14 +347,14 @@ def list_photos(request):
             "remarks": photo.remarks,
         })
 
-    return Response(list(response_data.values()), status=status.HTTP_200_OK)
+    return Response(list(response_data.values()), status=http_status.HTTP_200_OK)
 
 # Office Verification Report View
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def office_verification_report(request):
     photos_to_verify = RetailerPhoto.objects.filter(is_verified=False).values('retailer').annotate(total=Count('id'))
-    return Response({"photos_to_verify": list(photos_to_verify)}, status=status.HTTP_200_OK)
+    return Response({"photos_to_verify": list(photos_to_verify)}, status=http_status.HTTP_200_OK)
 
 # List Vouchers
 @api_view(['GET'])
@@ -366,7 +370,7 @@ def list_vouchers(request):
 
     vouchers = Voucher.objects.filter(**filters)
     serializer = VoucherSerializer(vouchers, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=http_status.HTTP_200_OK)
 
 @api_view(['GET'])
 def kodepos_list(request):
@@ -411,7 +415,7 @@ class KodeposDetailView(APIView):
             serializer = KodeposSerializer(kodepos)
             return Response(serializer.data)
         except Kodepos.DoesNotExist:
-            return Response({"error": "Kodepos not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Kodepos not found"}, status=http_status.HTTP_404_NOT_FOUND)
 
 class ReportView(APIView):
     permission_classes = [IsAuthenticated]
@@ -458,27 +462,27 @@ class ReportView(APIView):
         queryset = self.get_queryset(view_name)
         serializer_class = self.get_serializer_class(view_name)
         if not queryset or not serializer_class:
-            return Response({"error": "Invalid view name"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid view name"}, status=http_status.HTTP_400_BAD_REQUEST)
 
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         file_path = os.path.join(settings.MEDIA_ROOT, f'{view_name}-{timestamp}.xlsx')
         self.export_to_excel(queryset, serializer_class, file_path)
         
-        return Response({"message": "Report generated successfully", "file_path": file_path}, status=status.HTTP_200_OK)
+        return Response({"message": "Report generated successfully", "file_path": file_path}, status=http_status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_items(request):
     items = Item.objects.all()
     serializer = ItemSerializer(items, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=http_status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_reimburse(request):
     voucher_codes = request.data.get('voucher_codes')
     if not voucher_codes or not isinstance(voucher_codes, list):
-        return Response({"error": "Voucher codes must be provided as a list"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Voucher codes must be provided as a list"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     responses = []
     for voucher_code in voucher_codes:
@@ -496,26 +500,39 @@ def submit_reimburse(request):
             responses.append({"voucher_code": voucher_code, "error": "This voucher has not been redeemed"})
             continue
 
-        serializer = ReimburseSerializer(data={"voucher_code": voucher_code})
+        serializer = ReimburseSerializer(data={"voucher_code": voucher_code}, context={'request': request})
         if serializer.is_valid():
             serializer.save(reimbursed_by=request.user.username)
             responses.append({"voucher_code": voucher_code, "status": "submitted"})
         else:
             responses.append({"voucher_code": voucher_code, "error": serializer.errors})
 
-    return Response(responses, status=status.HTTP_201_CREATED)
+    return Response(responses, status=http_status.HTTP_201_CREATED)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_reimburse_status(request, pk, new_status):
-    if new_status not in ['completed']:
-        return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
+    if new_status not in ['completed', 'paid']:
+        return Response({"error": "Invalid status"}, status=http_status.HTTP_400_BAD_REQUEST)
     
     reimburse = get_object_or_404(Reimburse, pk=pk)
-    reimburse.status = new_status
-    reimburse.completed_at = datetime.now()
+
+    # Create new status in ReimburseStatus
+    status = ReimburseStatus.objects.create(
+        status=new_status,
+        status_at=datetime.now(),
+        status_by=request.user.username
+    )
+
+    # Update status in Reimburse
+    reimburse.status = status
+    # if new_status == 'completed':
+    #     reimburse.completed_at = datetime.now()
+    # elif new_status == 'paid':
+    #     reimburse.paid_at = datetime.now()
     reimburse.save()
-    return Response({"message": f"Reimburse status updated to {new_status}"}, status=status.HTTP_200_OK)
+    
+    return Response({"message": f"Reimburse status updated to {new_status}"}, status=http_status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -553,4 +570,4 @@ def list_reimburse(request):
                 transaction_detail_serializer = WholesaleTransactionDetailSerializer(transaction_details, many=True)
                 transaction['details'] = transaction_detail_serializer.data
 
-    return Response(reimburse_data, status=status.HTTP_200_OK)
+    return Response(reimburse_data, status=http_status.HTTP_200_OK)

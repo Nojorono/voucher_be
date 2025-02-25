@@ -26,9 +26,6 @@ class VoucherRedeem(models.Model):
     
 # Model untuk Transaksi Wholesale
 class WholesaleTransaction(models.Model):
-    # ryp_qty = models.DecimalField(max_digits=10, decimal_places=2, help_text="Jumlah RYP")
-    # rys_qty = models.DecimalField(max_digits=10, decimal_places=2, help_text="Jumlah RYS")
-    # rym_qty = models.DecimalField(max_digits=10, decimal_places=2, help_text="Jumlah RYM")
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='receipt_photos/')
     voucher_redeem = models.ForeignKey(VoucherRedeem, on_delete=models.CASCADE)

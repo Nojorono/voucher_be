@@ -22,7 +22,9 @@ class Voucher(models.Model):
     code = models.CharField(max_length=20, unique=True)
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
     is_approved = models.BooleanField(default=False)
+    approved_at = models.DateTimeField(null=True, blank=True)
     is_rejected = models.BooleanField(default=False)
+    rejected_at = models.DateTimeField(null=True, blank=True)
     redeemed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expired_at = models.DateTimeField(null=True, blank=True)
@@ -39,6 +41,8 @@ class RetailerPhoto(models.Model):
     is_rejected = models.BooleanField(default=False)
     remarks = models.CharField(max_length=50, null=True, blank=True)
     verified_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Photo of {self.retailer.name}"

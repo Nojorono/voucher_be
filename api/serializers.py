@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from office.models import User, Kodepos, Item, Reimburse
+from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
@@ -354,10 +354,12 @@ class ReimburseSerializer(serializers.ModelSerializer):
     voucher_code = serializers.CharField(source='voucher.code', read_only=True)
     wholesaler_name = serializers.CharField(source='wholesaler.name', read_only=True)
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
+    status = serializers.CharField(source='status.status', read_only=True)
+    status_at = serializers.DateTimeField(source='status.status_at', read_only=True)
 
     class Meta:
         model = Reimburse
-        fields = ['id', 'voucher_code', 'wholesaler_name', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status']
+        fields = ['id', 'voucher_code', 'wholesaler_name', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status', 'status_at']
 
     def create(self, validated_data):
         voucher_code = self.initial_data.get('voucher_code')
@@ -368,13 +370,29 @@ class ReimburseSerializer(serializers.ModelSerializer):
         retailer = voucher.retailer
         wholesaler = retailer.wholesale
 
+        # Create ReimburseStatus with default values
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError("Request context is required.")
+        
+        status = ReimburseStatus.objects.create(
+            status='waiting',
+            status_at=datetime.now(),
+            status_by=request.user.username
+        )
+
+        # Remove reimbursed_by from validated_data to avoid duplication
+        validated_data.pop('reimbursed_by', None)
+        
         return Reimburse.objects.create(
             voucher=voucher,
             wholesaler=wholesaler,
             retailer=retailer,
+            status=status,  # Set status
+            reimbursed_by=request.user.username,
             **validated_data
         )
-
+    
 # Retailer Report Serializer
 class RetailerReportSerializer(serializers.ModelSerializer):
     agen_name = serializers.CharField(source='wholesale.name', read_only=True)

@@ -72,18 +72,32 @@ class Reimburse(models.Model):
     wholesaler = models.ForeignKey('wholesales.Wholesale', on_delete=models.CASCADE)
     reimbursed_at = models.DateTimeField(auto_now_add=True)
     reimbursed_by = models.CharField(max_length=50, null=True, blank=True)
+    status = models.ForeignKey('ReimburseStatus', on_delete=models.CASCADE, null=True, blank=True, related_name='reimburses')
+
+    def __str__(self):
+        return f"Reimburse {self.voucher.code} by {self.wholesaler.name}"
+    
+    def get_latest_status(self):
+        return self.status.status, self.status.status_at
+
+# Model untuk status pembayaran Reimburse
+class ReimburseStatus(models.Model):
     STATUS_CHOICES = [
-        ('waiting', 'Waiting for Payment'),
+        ('waiting', 'Waiting for Reimburse'),
         ('completed', 'Reimburse Completed'),
-        ('paid', 'Paid'),
+        ('paid', 'Reimburse Paid'),
     ]
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='waiting',
-        help_text="Status Reimburse"
+        help_text="Status Pembayaran"
     )
-    completed_at = models.DateTimeField(null=True, blank=True)
+    status_at = models.DateTimeField(null=True, blank=True)
+    status_by = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        return f"Reimburse {self.voucher.code} by {self.wholesaler.name}"
+        return f"Status {self.status} at {self.status_at}"
+    
+    def get_reimburses(self):
+        return self.reimburses.all()
