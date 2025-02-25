@@ -370,7 +370,7 @@ def list_vouchers(request):
 
     vouchers = Voucher.objects.filter(**filters)
     serializer = VoucherSerializer(vouchers, many=True)
-    return Response(serializer.data, status=http_status.HTTP_200_OK)
+    return Response(serializer.data, status=http_status.HTTP_200_OK) 
 
 @api_view(['GET'])
 def kodepos_list(request):

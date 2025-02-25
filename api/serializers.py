@@ -383,14 +383,14 @@ class ReimburseSerializer(serializers.ModelSerializer):
 
         # Remove reimbursed_by from validated_data to avoid duplication
         validated_data.pop('reimbursed_by', None)
-        
+
         return Reimburse.objects.create(
             voucher=voucher,
             wholesaler=wholesaler,
             retailer=retailer,
             status=status,  # Set status
             reimbursed_by=request.user.username,
-            **validated_data
+            **validated_data 
         )
     
 # Retailer Report Serializer
