@@ -419,7 +419,7 @@ class RetailerReportSerializer(serializers.ModelSerializer):
             return "REJECTED"
         if voucher.redeemed:
             reimburse = Reimburse.objects.filter(voucher=voucher).first()
-            if reimburse:
+            if reimburse and reimburse.status:
                 if reimburse.status.status == 'waiting':
                     return "WAITING REIMBURSE" 
                 elif reimburse.status.status == 'completed':
