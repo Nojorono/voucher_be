@@ -160,6 +160,8 @@ class RetailerViewSet(viewsets.ModelViewSet):
         # Update current_count in VoucherLimit
         voucher_limit = VoucherLimit.objects.first()
         if voucher_limit:
+            if voucher_limit.current_count >= voucher_limit.limit:
+                return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
             voucher_limit.current_count += 1
             voucher_limit.save()
 
@@ -592,7 +594,10 @@ def get_current_count(request):
     if not voucher_limit:
         return Response({"error": "Voucher limit not set"}, status=http_status.HTTP_404_NOT_FOUND)
     
-    return Response({"current_count": voucher_limit.current_count}, status=http_status.HTTP_200_OK)
+    if voucher_limit.current_count >= voucher_limit.limit:
+        return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
+    
+    return Response({"current_count": voucher_limit.current_count, "limit": voucher_limit.limit}, status=http_status.HTTP_200_OK)
 
 class VoucherLimitViewSet(viewsets.ModelViewSet):
     queryset = VoucherLimit.objects.all()
