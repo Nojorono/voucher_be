@@ -157,8 +157,8 @@ class RetailerViewSet(viewsets.ModelViewSet):
         voucher.approved_at = datetime.now()
         voucher.save()
 
-        # Update current_count in VoucherLimit
-        voucher_limit = VoucherLimit.objects.first()
+        # Update current_count in VoucherLimit with id 1
+        voucher_limit = VoucherLimit.objects.filter(id=1).first()
         if voucher_limit:
             if voucher_limit.current_count >= voucher_limit.limit:
                 return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
