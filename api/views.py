@@ -298,9 +298,9 @@ def list_retailers(request):
             'REJECTED': {'voucher__is_rejected': True, 'voucher__redeemed': False},
             'RECEIVED': {'voucher__is_approved': True, 'voucher__redeemed': False},
             'REDEEMED': {'voucher__is_approved': True, 'voucher__redeemed': True},
-            'WAITING REIMBURSE': {'voucher__in': Reimburse.objects.filter(status='waiting').values_list('voucher', flat=True)},
-            'REIMBURSE COMPLETED': {'voucher__in': Reimburse.objects.filter(status='completed').values_list('voucher', flat=True)},
-            'REIMBURSE PAID': {'voucher__in': Reimburse.objects.filter(status='paid').values_list('voucher', flat=True)}
+            'WAITING REIMBURSE': {'voucher__in': Reimburse.objects.filter(status__status='waiting').values_list('voucher', flat=True)},
+            'REIMBURSE COMPLETED': {'voucher__in': Reimburse.objects.filter(status__status='completed').values_list('voucher', flat=True)},
+            'REIMBURSE PAID': {'voucher__in': Reimburse.objects.filter(status__status='paid').values_list('voucher', flat=True)}
         }
         retailers = retailers.filter(**status_filters.get(voucher_status.upper(), {}))
         
