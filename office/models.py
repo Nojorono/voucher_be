@@ -101,3 +101,12 @@ class ReimburseStatus(models.Model):
     
     def get_reimburses(self):
         return self.reimburses.all()
+
+class VoucherLimit(models.Model):
+    description = models.CharField(max_length=100, null=True, blank=True)
+    limit = models.IntegerField(default=0)
+    current_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Voucher Limit: {self.limit}, Current Count: {self.current_count}"

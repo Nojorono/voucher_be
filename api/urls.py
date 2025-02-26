@@ -30,7 +30,8 @@ from .views import (
     update_reimburse_status,
     list_reimburse,
     list_retailers,
-    # list_trx_voucher,
+    get_current_count, 
+    VoucherLimitViewSet, 
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -57,6 +58,7 @@ schema_view = get_schema_view(
 router = DefaultRouter()
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
 router.register(r'retailers', RetailerViewSet, basename='retailer')
+router.register(r'voucherlimit', VoucherLimitViewSet, basename='voucherlimit')
 
 
 urlpatterns = [
@@ -95,6 +97,7 @@ urlpatterns = [
     path('submit_reimburse/', submit_reimburse, name='submit_reimburse'),
     path('list_reimburse/', list_reimburse, name='list_reimburse'),
     path('update_reimburse_status/<int:pk>/<str:new_status>/', update_reimburse_status, name='update_reimburse_status'),
+    path('current-count/', get_current_count, name='get_current_count'),
 
     # Include ViewSet routes
     path('', include(router.urls)),

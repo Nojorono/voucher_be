@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus
+from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus, VoucherLimit
 from retailer.models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from django.shortcuts import get_object_or_404
@@ -14,7 +14,8 @@ from .serializers import (
     VoucherRedeemSerializer, RetailerRegistrationSerializer, RetailerPhotoSerializer, 
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
     VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer,
-    ReimburseSerializer, RetailerReportSerializer, WholesaleTransactionDetailSerializer
+    ReimburseSerializer, RetailerReportSerializer, WholesaleTransactionDetailSerializer,
+    VoucherLimitSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -155,6 +156,13 @@ class RetailerViewSet(viewsets.ModelViewSet):
         voucher.is_approved = True
         voucher.approved_at = datetime.now()
         voucher.save()
+
+        # Update current_count in VoucherLimit
+        voucher_limit = VoucherLimit.objects.first()
+        if voucher_limit:
+            voucher_limit.current_count += 1
+            voucher_limit.save()
+
         return Response({"message": "All photos for retailer verified successfully."}, status=http_status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -571,3 +579,22 @@ def list_reimburse(request):
                 transaction['details'] = transaction_detail_serializer.data
 
     return Response(reimburse_data, status=http_status.HTTP_200_OK)
+
+@api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+def get_current_count(request):
+    voucher_limit_id = request.query_params.get('id')
+    if voucher_limit_id:
+        voucher_limit = get_object_or_404(VoucherLimit, id=voucher_limit_id)
+    else:
+        voucher_limit = VoucherLimit.objects.first()
+    
+    if not voucher_limit:
+        return Response({"error": "Voucher limit not set"}, status=http_status.HTTP_404_NOT_FOUND)
+    
+    return Response({"current_count": voucher_limit.current_count}, status=http_status.HTTP_200_OK)
+
+class VoucherLimitViewSet(viewsets.ModelViewSet):
+    queryset = VoucherLimit.objects.all()
+    serializer_class = VoucherLimitSerializer
+    permission_classes = [IsAuthenticated]

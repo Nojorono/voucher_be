@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus
+from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus, VoucherLimit
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
@@ -441,3 +441,9 @@ class WholesaleTransactionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = WholesaleTransactionDetail
         fields = ['item_name', 'qty', 'sub_total']
+
+
+class VoucherLimitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoucherLimit
+        fields = ['id', 'description', 'limit', 'current_count']
