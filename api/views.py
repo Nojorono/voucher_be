@@ -151,19 +151,22 @@ class RetailerViewSet(viewsets.ModelViewSet):
         if not photos.exists():
             return Response({"message": "No photos found for this retailer."}, status=http_status.HTTP_404_NOT_FOUND)
 
-        # Mark all photos as verified
-        photos.update(is_verified=True, is_approved=True, verified_at=datetime.now(), approved_at=datetime.now())
-        voucher.is_approved = True
-        voucher.approved_at = datetime.now()
-        voucher.save()
-
         # Update current_count in VoucherLimit with id 1
         voucher_limit = VoucherLimit.objects.filter(id=1).first()
+        if voucher_limit.current_count >= voucher_limit.limit:
+            return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
+        
         if voucher_limit:
-            if voucher_limit.current_count >= voucher_limit.limit:
-                return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
             voucher_limit.current_count += 1
             voucher_limit.save()
+
+        # Mark all photos as verified
+        photos.update(is_verified=True, is_approved=True, verified_at=datetime.now(), approved_at=datetime.now())
+        if voucher:
+            voucher.is_approved = True
+            voucher.approved_at = datetime.now()
+            voucher.save()
+
 
         return Response({"message": "All photos for retailer verified successfully."}, status=http_status.HTTP_200_OK)
 
