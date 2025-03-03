@@ -3,3 +3,4 @@
 */receipt_photos/*
 */settings.py
 *.xlsx
+.env
