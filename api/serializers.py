@@ -400,6 +400,7 @@ class RetailerReportSerializer(serializers.ModelSerializer):
     voucher_code = serializers.SerializerMethodField()
     retailer_photos = serializers.SerializerMethodField()
     voucher_status = serializers.SerializerMethodField()
+    voucher_status_at = serializers.SerializerMethodField()
 
     def get_voucher_code(self, obj):
         voucher = Voucher.objects.filter(retailer=obj).first()
@@ -421,18 +422,35 @@ class RetailerReportSerializer(serializers.ModelSerializer):
             reimburse = Reimburse.objects.filter(voucher=voucher).first()
             if reimburse and reimburse.status:
                 if reimburse.status.status == 'waiting':
-                    return "WAITING REIMBURSE" 
+                    return "WAITING REIMBURSE"
                 elif reimburse.status.status == 'completed':
                     return "REIMBURSE COMPLETED"
-                elif reimburse.status.status == 'paid': 
+                elif reimburse.status.status == 'paid':
                     return "REIMBURSE PAID"
             return "REDEEMED"
         return "RECEIVED" if voucher.is_approved else "PENDING"
 
+    def get_voucher_status_at(self, obj):
+        voucher = Voucher.objects.filter(retailer=obj).first()
+        if not voucher:
+            return None
+        if voucher.is_rejected:
+            return voucher.rejected_at
+        if voucher.redeemed:
+            redeem = VoucherRedeem.objects.filter(voucher=voucher).first()
+            if redeem:
+                reimburse = Reimburse.objects.filter(voucher=voucher).first()
+                if reimburse and reimburse.status:
+                    return reimburse.status.status_at
+                return redeem.redeemed_at
+        if voucher.is_approved:
+            return voucher.approved_at
+        return voucher.created_at
+
     class Meta:
         model = Retailer
         fields = ['agen_name', 'retailer_name', 'phone_number', 'address', 'kelurahan', 'kecamatan', 'kota', 'provinsi',
-                  'voucher_code', 'voucher_status', 'retailer_photos']
+                  'voucher_code', 'voucher_status', 'voucher_status_at', 'retailer_photos']
 
 
 class WholesaleTransactionDetailSerializer(serializers.ModelSerializer):

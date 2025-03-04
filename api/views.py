@@ -67,7 +67,7 @@ class UserViewSet(viewsets.ViewSet):
 
 # Wholesale ViewSet
 class WholesaleViewSet(viewsets.ModelViewSet):
-    queryset = Wholesale.objects.all()
+    queryset = Wholesale.objects.all().order_by('-created_at')
     serializer_class = WholesaleSerializer
     # permission_classes = [IsAuthenticated]
 
