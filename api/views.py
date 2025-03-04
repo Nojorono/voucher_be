@@ -350,6 +350,8 @@ def list_photos(request):
                 "retailer_phone_number": retailer.phone_number,
                 "retailer_address": retailer.address,
                 "retailer_voucher_code": voucher_code,
+                "retailer_voucher_status": "PENDING" if not voucher else "RECEIVED" if voucher.is_approved else "REJECTED",
+                "retailer_voucher_status_at": voucher.created_at if not voucher else voucher.approved_at if voucher.is_approved else voucher.rejected_at,
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
