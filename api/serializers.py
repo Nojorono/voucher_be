@@ -9,6 +9,8 @@ from datetime import datetime
 from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.mail import send_mail
+from django.conf import settings
 
 # Custom Token Serializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -41,11 +43,6 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'email', 'wholesale', 'wholesale_name', 'is_active', 'is_staff']
-
-    # def validate_email(self, value):
-    #     if User.objects.filter(email=value).exists():
-    #         raise serializers.ValidationError("Email already in use.")
-    #     return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -283,12 +280,35 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         )
 
         for index, photo in enumerate(photos):
-            # compressed_photo = self.compress_image(photo)
+            compressed_photo = self.compress_image(photo)
             remarks = photo_remarks[index] if index < len(photo_remarks) else ''
-            RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
+            RetailerPhoto.objects.create(retailer=retailer, image=compressed_photo, remarks=remarks)
 
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
+
+        # Send email notification
+        subject = 'Verifikasi Retailer'
+        message = f"""
+        <html>
+        <body>
+            <p>Dear Admin,</p>
+            <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
+            <table>
+            <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
+            <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
+            <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
+            <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
+            <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
+            </table>
+            <p>Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
+            <p><a href="http://10.0.29.49:81/verification">Verifikasi Sekarang</a></p>
+        </body>
+        </html>
+        """
+        email_from = settings.DEFAULT_FROM_EMAIL
+        recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
+        send_mail(subject, message, email_from, recipient_list, html_message=message)
 
         return {
             "voucher_code": voucher_code,

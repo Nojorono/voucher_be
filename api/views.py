@@ -1,4 +1,5 @@
 # Revised views.py
+import os
 from rest_framework import viewsets, generics
 from rest_framework import status as http_status
 from rest_framework.views import APIView
@@ -192,28 +193,6 @@ def retailer_register_upload(request):
     
     if serializer.is_valid():
         data = serializer.save()
-        # send email notification
-        subject = f'Verifikasi Retailer'
-        message = f"""
-        <html>
-        <body>
-            <p>Dear Admin,</p>
-            <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
-            <table>
-            <tr><td><strong>Nama Retailer</strong></td><td>: {request.data['name']}</td></tr>
-            <tr><td><strong>No WhatsApp</strong></td><td>: {request.data['phone_number']}</td></tr>
-            <tr><td><strong>Nama Agen</strong></td><td>: {request.data['ws_name']}</td></tr>
-            <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
-            <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
-            </table>
-            <p>Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
-            <p><a href="http://10.0.29.49:81/verification">Verifikasi Sekarang</a></p>
-        </body>
-        </html>
-        """
-        email_from = settings.DEFAULT_FROM_EMAIL
-        recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
-        send_mail(subject, message, email_from, recipient_list, html_message=message)
 
         return Response({
             "message": "Retailer registered successfully",
@@ -350,8 +329,8 @@ def list_photos(request):
                 "retailer_phone_number": retailer.phone_number,
                 "retailer_address": retailer.address,
                 "retailer_voucher_code": voucher_code,
-                "retailer_voucher_status": "PENDING" if not voucher else "RECEIVED" if voucher.is_approved else "REJECTED",
-                "retailer_voucher_status_at": voucher.created_at if not voucher else voucher.approved_at if voucher.is_approved else voucher.rejected_at,
+                "retailer_voucher_status": "PENDING" if not voucher else "RECEIVED",
+                "retailer_voucher_status_at": voucher.created_at if voucher else voucher.approved_at,
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
