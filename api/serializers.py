@@ -283,9 +283,9 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         )
 
         for index, photo in enumerate(photos):
-            compressed_photo = self.compress_image(photo)
+            # compressed_photo = self.compress_image(photo)
             remarks = photo_remarks[index] if index < len(photo_remarks) else ''
-            RetailerPhoto.objects.create(retailer=retailer, image=compressed_photo, remarks=remarks)
+            RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
 
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
