@@ -302,7 +302,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
             </table>
             <p>Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
-            <p><a href="http://10.0.29.49:81/verification">Verifikasi Sekarang</a></p>
+            <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
         </body>
         </html>
         """
