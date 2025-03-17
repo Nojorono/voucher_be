@@ -12,6 +12,11 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import send_mail
 from django.conf import settings
 
+import logging
+from django.core.mail import send_mail
+
+logger = logging.getLogger(__name__)
+
 # Custom Token Serializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -308,7 +313,12 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         """
         email_from = settings.DEFAULT_FROM_EMAIL
         recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
-        send_mail(subject, message, email_from, recipient_list, html_message=message)
+        # send_mail(subject, message, email_from, recipient_list, html_message=message)
+        try:
+            send_mail(subject, message, email_from, recipient_list, html_message=message)
+            logger.info("Email berhasil dikirim ke %s", recipient_list)
+        except Exception as e:
+            logger.error("Gagal mengirim email: %s", str(e))
         
         return {
             "voucher_code": voucher_code,
