@@ -4,16 +4,15 @@ from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, Wh
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-import random, string
+import random, string, threading, logging
 from datetime import datetime
 from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import send_mail
 from django.conf import settings
-import logging
-from django.core.mail import send_mail
 
+# Konfigurasi logger
 logger = logging.getLogger(__name__)
 
 # Custom Token Serializer
@@ -230,6 +229,8 @@ class RetailerRegistrationSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
+        logger.info(f"Validating retailer data: {data}")
+
         phone_number = data.get('phone_number')
         data['phone_number'] = '62' + phone_number[1:] if phone_number.startswith('0') else phone_number
 
@@ -238,11 +239,14 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             voucher_rejected = Voucher.objects.filter(retailer=existing_retailer, is_rejected=True).exists()
             # photo_rejected = RetailerPhoto.objects.filter(retailer=existing_retailer, is_rejected=True).exists()
             if not voucher_rejected:
+                logger.warning(f"Phone number {data['phone_number']} is already registered.")
                 raise serializers.ValidationError("Phone number is already registered.")
 
         wholesale = Wholesale.objects.filter(name=data['ws_name']).first()
         if not wholesale:
+            logger.error(f"Wholesale '{data['ws_name']}' not found.")
             raise serializers.ValidationError("Wholesale not found.")
+        
         data['wholesale'] = wholesale
         return data
 
@@ -267,7 +271,9 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         )
 
     def create(self, validated_data):
-        photos = validated_data.pop('photos')
+        logger.info("Starting retailer registration process...")
+
+        photos = validated_data.pop('photos', [])
         photo_remarks = validated_data.pop('photo_remarks', [])
         wholesale = validated_data.pop('wholesale')
         expired_at = validated_data.pop('expired_at', datetime(2025, 7, 2, 23, 59, 59))
@@ -283,45 +289,84 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             provinsi=validated_data.get("provinsi")
         )
 
+        logger.info(f"Retailer {retailer.name} created successfully.")
+
         for index, photo in enumerate(photos):
-            # compressed_photo = self.compress_image(photo)
+            compressed_photo = self.compress_image(photo)
             remarks = photo_remarks[index] if index < len(photo_remarks) else ''
             RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
+
+        logger.info(f"Uploaded {len(photos)} photos for retailer {retailer.name}")
 
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
 
-        # Send email notification
-        subject = 'Verifikasi Retailer'
-        message = f"""
-        <html>
-        <body>
-            <p>Dear Admin,</p>
-            <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
-            <table>
-            <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
-            <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
-            <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
-            <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
-            <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
-            </table>
-            <p>Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
-            <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
-        </body>
-        </html>
-        """
-        email_from = settings.DEFAULT_FROM_EMAIL
-        recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
-        try:
-            send_mail(subject, message, email_from, recipient_list, html_message=message)
-            logger.info("Email berhasil dikirim ke %s", recipient_list)
-        except Exception as e:
-            logger.error("Gagal mengirim email: %s", str(e))
-            
+        logger.info(f"Voucher {voucher_code} generated for retailer {retailer.name}")
+        
+        # Send email asynchronously using threading
+        self.send_email_async(retailer, wholesale)
+
+        # # Send email notification
+        # subject = 'Verifikasi Retailer'
+        # message = f"""
+        # <html>
+        # <body>
+        #     <p>Dear Admin,</p>
+        #     <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
+        #     <table>
+        #     <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
+        #     <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
+        #     <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
+        #     <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
+        #     <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
+        #     </table>
+        #     <p>Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
+        #     <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
+        # </body>
+        # </html>
+        # """
+        # email_from = settings.DEFAULT_FROM_EMAIL
+        # recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
+        # send_mail(subject, message, email_from, recipient_list, html_message=message)
+
         return {
             "voucher_code": voucher_code,
             "retailer_id": retailer.id
         }
+
+    def send_email_async(self, retailer, wholesale):
+        """Mengirim email secara asynchronous menggunakan threading"""
+        def email_task():
+            subject = 'Verifikasi Retailer'
+            message = f"""
+            <html>
+            <body>
+                <p>Dear Admin,</p>
+                <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
+                <table>
+                <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
+                <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
+                <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
+                <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
+                <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
+                </table>
+                <p>Mohon segera melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
+                <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
+            </body>
+            </html>
+            """
+            email_from = settings.DEFAULT_FROM_EMAIL
+            recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
+
+            try:
+                send_mail(subject, message, email_from, recipient_list, html_message=message, fail_silently=False)
+                logger.info(f"Email sent successfully to {recipient_list}")
+            except Exception as e:
+                logger.error(f"Error sending email: {e}")
+
+        # Jalankan fungsi `email_task` dalam thread terpisah
+        email_thread = threading.Thread(target=email_task)
+        email_thread.start()
 
 # Voucher Serializer
 class VoucherSerializer(serializers.ModelSerializer):

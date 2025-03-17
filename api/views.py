@@ -189,30 +189,18 @@ class RetailerViewSet(viewsets.ModelViewSet):
         return Response({"message": "All photos for retailer rejected successfully."}, status=http_status.HTTP_200_OK)
 
 # Retailer Registration API
-@api_view(['POST', 'OPTIONS'])
-@csrf_exempt  # Nonaktifkan CSRF untuk request ini
+@api_view(['POST'])
 def retailer_register_upload(request):
-    if request.method == "OPTIONS":
-        response = JsonResponse({"message": "CORS preflight successful"})
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        response["Access-Control-Allow-Headers"] = "*"
-        return response
-
     serializer = RetailerRegistrationSerializer(data=request.data)
     
     if serializer.is_valid():
-        try:
-            data = serializer.save()
-            return Response({
-                "message": "Retailer registered successfully",
-                "voucher_code": data.get("voucher_code", ""),
-                "retailer_id": data.get("retailer_id", "")
-            }, status=http_status.HTTP_201_CREATED)
-        except Exception as e:
-            print(f"Error saving retailer: {e}")  # Logging error
-            return Response({"error": "Failed to register retailer"}, status=http_status.HTTP_500_INTERNAL_SERVER_ERROR)
+        data = serializer.save()
 
+        return Response({
+            "message": "Retailer registered successfully",
+            "voucher_code": data["voucher_code"],
+            "retailer_id": data["retailer_id"]
+        }, status=http_status.HTTP_201_CREATED)
     return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Redeem Voucher API
@@ -348,7 +336,7 @@ def list_photos(request):
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
-            "image": photo.image.url if photo.image else None,
+            "image": photo.image.url,
             "is_verified": photo.is_verified,
             "is_approved": photo.is_approved,
             "is_rejected": photo.is_rejected,
