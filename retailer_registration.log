@@ -1,0 +1,6 @@
+2025-03-17 17:49:39,215 - INFO - Validating retailer data: {'ws_name': 'Warung Tembakau Utan Jati', 'name': '425', 'phone_number': '425', 'address': '425', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA SELATAN', 'kecamatan': 'JAGAKARSA', 'kelurahan': 'CIPEDAK', 'photos': [<InMemoryUploadedFile: Screenshot 2025-03-17 105908.png (image/png)>, <InMemoryUploadedFile: Screenshot 2025-03-13 130455.png (image/png)>, <InMemoryUploadedFile: Screenshot 2025-03-13 085115.png (image/png)>], 'photo_remarks': ['Foto Stiker POSM', 'Foto Tester', 'Foto Kode Tester']}
+2025-03-17 17:49:39,941 - INFO - Starting retailer registration process...
+2025-03-17 17:49:39,987 - INFO - Retailer 425 created successfully.
+2025-03-17 17:49:43,777 - INFO - Uploaded 3 photos for retailer 425
+2025-03-17 17:49:43,819 - INFO - Voucher 37L7DKDI59 generated for retailer 425
+2025-03-17 17:49:46,168 - INFO - Email sent successfully to ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']

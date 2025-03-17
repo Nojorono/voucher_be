@@ -14,6 +14,18 @@ from django.conf import settings
 
 # Konfigurasi logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Simpan log ke file `retailer_registration.log`
+file_handler = logging.FileHandler('retailer_registration.log')
+file_handler.setLevel(logging.DEBUG)
+
+# Format log
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Tambahkan handler ke logger
+logger.addHandler(file_handler)
 
 # Custom Token Serializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -302,7 +314,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
 
         logger.info(f"Voucher {voucher_code} generated for retailer {retailer.name}")
-        
+
         # Send email asynchronously using threading
         self.send_email_async(retailer, wholesale)
 
