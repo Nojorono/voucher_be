@@ -11,7 +11,6 @@ from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import send_mail
 from django.conf import settings
-
 import logging
 from django.core.mail import send_mail
 
@@ -235,8 +234,11 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         data['phone_number'] = '62' + phone_number[1:] if phone_number.startswith('0') else phone_number
 
         existing_retailer = Retailer.objects.filter(phone_number=data['phone_number']).first()
-        if existing_retailer and not Voucher.objects.filter(retailer=existing_retailer, is_rejected=True).exists():
-            raise serializers.ValidationError("Phone number is already registered.")
+        if existing_retailer:
+            voucher_rejected = Voucher.objects.filter(retailer=existing_retailer, is_rejected=True).exists()
+            # photo_rejected = RetailerPhoto.objects.filter(retailer=existing_retailer, is_rejected=True).exists()
+            if not voucher_rejected:
+                raise serializers.ValidationError("Phone number is already registered.")
 
         wholesale = Wholesale.objects.filter(name=data['ws_name']).first()
         if not wholesale:
@@ -281,13 +283,10 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             provinsi=validated_data.get("provinsi")
         )
 
-        RetailerPhoto.objects.bulk_create([
-            RetailerPhoto(
-                retailer=retailer,
-                # image=self.compress_image(photo),
-                remarks=photo_remarks[index] if index < len(photo_remarks) else ''
-            ) for index, photo in enumerate(photos)
-        ])
+        for index, photo in enumerate(photos):
+            # compressed_photo = self.compress_image(photo)
+            remarks = photo_remarks[index] if index < len(photo_remarks) else ''
+            RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
 
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
@@ -313,13 +312,12 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         """
         email_from = settings.DEFAULT_FROM_EMAIL
         recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
-        # send_mail(subject, message, email_from, recipient_list, html_message=message)
         try:
             send_mail(subject, message, email_from, recipient_list, html_message=message)
             logger.info("Email berhasil dikirim ke %s", recipient_list)
         except Exception as e:
             logger.error("Gagal mengirim email: %s", str(e))
-        
+            
         return {
             "voucher_code": voucher_code,
             "retailer_id": retailer.id
