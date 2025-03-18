@@ -24,6 +24,7 @@ from django.db.models import Count
 from datetime import datetime
 import pandas as pd
 from django.conf import settings
+from django.utils.decorators import method_decorator
 from django.core.mail import send_mail
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -503,8 +504,7 @@ def submit_reimburse(request):
         else:
             responses.append({"voucher_code": voucher_code, "error": serializer.errors})
 
-    return Response(responses, status=http_status.HTTP_201_CREATED)
-
+@csrf_exempt
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_reimburse_status(request, pk, new_status):
