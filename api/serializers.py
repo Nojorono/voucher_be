@@ -495,7 +495,7 @@ class RetailerReportSerializer(serializers.ModelSerializer):
 
     def get_retailer_photos(self, obj):
         photos = RetailerPhoto.objects.filter(retailer=obj)
-        return [{'image': photo.image.url, 'remarks': photo.remarks} for photo in photos]
+        return [{'image': photo.image.url if photo.image else None, 'remarks': photo.remarks} for photo in photos]
 
     def get_voucher_status(self, obj):
         voucher = Voucher.objects.filter(retailer=obj).first()
