@@ -336,7 +336,7 @@ def list_photos(request):
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
-            "image": photo.image.url,
+            "image": photo.image.url if photo.image else None,
             "is_verified": photo.is_verified,
             "is_approved": photo.is_approved,
             "is_rejected": photo.is_rejected,
