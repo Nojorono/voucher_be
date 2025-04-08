@@ -368,11 +368,11 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             </html>
             """
             email_from = settings.DEFAULT_FROM_EMAIL
-            recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
-
+            recipient_list = ['deny.kusindarto@limamail.net']
+            cc_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']  # Add CC recipients here
             try:
-                send_mail(subject, message, email_from, recipient_list, html_message=message, fail_silently=False)
-                logger.info(f"Email sent successfully to {recipient_list}")
+                send_mail(subject, message, email_from, recipient_list, html_message=message, fail_silently=False, cc=cc_list)
+                logger.info(f"Email sent successfully to {recipient_list} with CC to {cc_list}")
             except Exception as e:
                 logger.error(f"Error sending email: {e}")
 
