@@ -9,7 +9,7 @@ from datetime import datetime
 from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 
 # Konfigurasi logger
@@ -318,29 +318,6 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         # Send email asynchronously using threading
         self.send_email_async(retailer, wholesale)
 
-        # # Send email notification
-        # subject = 'Verifikasi Retailer'
-        # message = f"""
-        # <html>
-        # <body>
-        #     <p>Dear Admin,</p>
-        #     <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
-        #     <table>
-        #     <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
-        #     <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
-        #     <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
-        #     <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
-        #     <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
-        #     </table>
-        #     <p>Mohon segara melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
-        #     <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
-        # </body>
-        # </html>
-        # """
-        # email_from = settings.DEFAULT_FROM_EMAIL
-        # recipient_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
-        # send_mail(subject, message, email_from, recipient_list, html_message=message)
-
         return {
             "voucher_code": voucher_code,
             "retailer_id": retailer.id
@@ -348,37 +325,53 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
     def send_email_async(self, retailer, wholesale):
         """Mengirim email secara asynchronous menggunakan threading"""
+
         def email_task():
             subject = 'Verifikasi Retailer'
-            message = f"""
+            html_content = f"""
             <html>
             <body>
                 <p>Dear Admin,</p>
-                <p>Berkaitan dengan program Super Perdana, Retailer sudah melakukan pendaftaran dengan detail dibawah ini.</p>
+                <p>Berkaitan dengan program Super Perdana, Retailer telah melakukan pendaftaran dengan detail berikut:</p>
                 <table>
-                <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
-                <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
-                <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
-                <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
-                <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
+                    <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
+                    <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
+                    <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
+                    <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
+                    <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
                 </table>
-                <p>Mohon segera melakukan verifikasi data mereka dengan cara klik tombol di bawah Ini untuk melihat dan memverifikasi formulir mereka:</p>
+                <p>Mohon segera melakukan verifikasi data mereka dengan klik tombol di bawah ini:</p>
                 <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
             </body>
             </html>
             """
+
             email_from = settings.DEFAULT_FROM_EMAIL
-            recipient_list = ['deny.kusindarto@limamail.net']
-            cc_list = ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']  # Add CC recipients here
+            to_emails = [
+                'deny.kusindarto@limamail.net'
+            ]
+            cc_emails = [
+                'banyu.senjana@limamail.net',
+                'dimas.rosadi@limamail.net'
+            ]
+
             try:
-                send_mail(subject, message, email_from, recipient_list, html_message=message, fail_silently=False, cc=cc_list)
-                logger.info(f"Email sent successfully to {recipient_list} with CC to {cc_list}")
+                email = EmailMessage(
+                    subject=subject,
+                    body=html_content,
+                    from_email=email_from,
+                    to=to_emails,
+                    cc=cc_emails,
+                )
+                email.content_subtype = 'html'  # Agar email dikirim dalam format HTML
+                email.send(fail_silently=False)
+                logger.info(f"Email sent successfully to {to_emails} with CC to {cc_emails}")
             except Exception as e:
-                logger.error(f"Error sending email: {e}")
+                logger.exception("Error sending email")
 
         # Jalankan fungsi `email_task` dalam thread terpisah
         email_thread = threading.Thread(target=email_task)
-        email_thread.start()
+        email_thread.start()    
 
 # Voucher Serializer
 class VoucherSerializer(serializers.ModelSerializer):
