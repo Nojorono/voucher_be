@@ -288,7 +288,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         photos = validated_data.pop('photos', [])
         photo_remarks = validated_data.pop('photo_remarks', [])
         wholesale = validated_data.pop('wholesale')
-        expired_at = validated_data.pop('expired_at', datetime(2025, 7, 2, 23, 59, 59))
+        expired_at = validated_data.pop('expired_at', datetime(2025, 7, 31, 23, 59, 59))
 
         retailer = Retailer.objects.create(
             name=validated_data["name"],
