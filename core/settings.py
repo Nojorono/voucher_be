@@ -110,10 +110,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
      'default': {
          'ENGINE': 'django.db.backends.postgresql',
-         'NAME': os.getenv('PSQL_NAME', 'mkt_ryo'),
-         'USER': os.getenv('PSQL_USER', 'jagoan2025'),
-         'PASSWORD': os.getenv('PSQL_PASSWORD', 'Jag0db@2025'),
-         'HOST': os.getenv('PSQL_HOST', '10.0.29.40'),
+         'NAME': os.getenv('PSQL_NAME', 'dbname'),
+         'USER': os.getenv('PSQL_USER', 'dbuser'),
+         'PASSWORD': os.getenv('PSQL_PASSWORD', 'dbpassword'),
+         'HOST': os.getenv('PSQL_HOST', 'dbhost'),
          'PORT': os.getenv('PSQL_PORT', '5432'),
          'OPTIONS': {
              'connect_timeout': 10,
