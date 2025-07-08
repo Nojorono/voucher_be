@@ -315,7 +315,7 @@ def list_photos(request):
 
     photos = RetailerPhoto.objects.filter(**filters)
     if not photos.exists():
-        return Response({"message": "No photos found"}, status=http_status.HTTP_404_NOT_FOUND)
+        return Response([], status=http_status.HTTP_200_OK)
 
     response_data = {}
     for photo in photos:

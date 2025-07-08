@@ -18,14 +18,64 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse, HttpResponse
+import json
+import os
+
+def health_check(request):
+    """Health check endpoint"""
+    try:
+        response_data = {
+            "status": "healthy", 
+            "service": "ryo-backend",
+            "static_url": getattr(settings, 'STATIC_URL', '/static/'),
+            "static_root": getattr(settings, 'STATIC_ROOT', '/app/staticfiles'),
+            "debug": getattr(settings, 'DEBUG', False),
+            "timestamp": str(request.META.get('HTTP_DATE', 'N/A'))
+        }
+        return JsonResponse(response_data, safe=False)
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": str(e),
+            "service": "ryo-backend"
+        }, status=500)
+
+def debug_static(request):
+    """Debug static files"""
+    try:
+        static_root = settings.STATIC_ROOT
+        static_url = settings.STATIC_URL
+        test_file = os.path.join(static_root, 'admin', 'css', 'base.css')
+        
+        response_data = {
+            "static_url": static_url,
+            "static_root": static_root,
+            "test_file_path": test_file,
+            "test_file_exists": os.path.exists(test_file),
+            "static_patterns": str(static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)),
+            "media_patterns": str(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))
+        }
+        
+        if os.path.exists(test_file):
+            response_data["test_file_size"] = os.path.getsize(test_file)
+            
+        return JsonResponse(response_data, safe=False, indent=2)
+    except Exception as e:
+        return JsonResponse({
+            "error": str(e)
+        }, status=500)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('health/', health_check),
+    path('debug-static/', debug_static),
     path('api/', include('api.urls')),
     path('office/', include('office.urls')),
     path('retailer/', include('retailer.urls')),
     path('wholesales/', include('wholesales.urls')),
 ]
-# Menambahkan pengaturan untuk file media (hanya untuk pengembangan)
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve static and media files in development/WSGI mode
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

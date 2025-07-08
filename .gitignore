@@ -1,6 +1,6 @@
 */__pycache__/
 */retailer_photos/*
 */receipt_photos/*
-*/settings.py
+*/settings-example.py
 *.xlsx
 .env
