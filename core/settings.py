@@ -76,7 +76,7 @@ ROOT_URLCONF = 'core.urls'
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://localhost:8000",
+    "http://localhost:8081",
     "http://localhost:3000",
 ]
 
@@ -182,8 +182,12 @@ STATICFILES_FINDERS = [
 
 # Media files for local development (when not using S3)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# MEDIA_URL = 'media/'
-MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else '/media/'
+MEDIA_URL = '/media/'  # Simple static media URL
+
+# AWS S3 Configuration (optional)
+AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN', '')
+if AWS_STORAGE_BUCKET_NAME and AWS_S3_CUSTOM_DOMAIN:
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
