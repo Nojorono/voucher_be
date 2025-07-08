@@ -44,6 +44,15 @@ python3 manage.py migrate --noinput
 echo "📁 Collecting static files..."
 python3 manage.py collectstatic --noinput --clear
 
+# Copy static files to host directory for WSL Nginx
+echo "📁 Copying static files to host directory..."
+if [ -d "/app/staticfiles-host" ]; then
+    cp -r /app/staticfiles/* /app/staticfiles-host/
+    echo "✅ Static files copied to host directory"
+else
+    echo "⚠️ Host staticfiles directory not mounted"
+fi
+
 # Create superuser if it doesn't exist
 echo "👤 Creating superuser..."
 python3 manage.py shell << 'EOF'
