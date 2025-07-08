@@ -182,12 +182,8 @@ STATICFILES_FINDERS = [
 
 # Media files for local development (when not using S3)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'  # Simple static media URL
-
-# AWS S3 Configuration (optional)
-AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN', '')
-if AWS_STORAGE_BUCKET_NAME and AWS_S3_CUSTOM_DOMAIN:
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+# MEDIA_URL = 'media/'
+MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
