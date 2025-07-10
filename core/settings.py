@@ -75,14 +75,35 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:8000",
-    "http://localhost:3000",
+    "http://localhost:5173",  # Vite dev server
+    "http://localhost:3000",  # Docker frontend
+    "http://localhost:8080",  # Backend
+    "http://10.0.3.222",      # AWS private IP
+    "http://10.0.3.222:3000", # AWS frontend
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
 CORS_ALLOW_CREDENTIALS = True  # Jika menggunakan cookies atau session
+
+# Add CSP middleware if not exists
+if 'csp.middleware.CSPMiddleware' not in MIDDLEWARE:
+    MIDDLEWARE.insert(1, 'csp.middleware.CSPMiddleware')
+
+# CSP Configuration
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_CONNECT_SRC = (
+    "'self'", 
+    "http://localhost:8080",   # ✅ Backend
+    "http://localhost:5173",   # ✅ Vite dev
+    "http://localhost:3000",   # ✅ Docker frontend
+    "http://10.0.3.222",       # ✅ AWS
+    "https://apiryo.loclalhost",  # ✅ Local API
+)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net")
+CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
 
 AUTH_USER_MODEL = 'office.User'
 
