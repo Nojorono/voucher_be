@@ -62,9 +62,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -78,11 +78,18 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:8000",
     "http://localhost:3000",
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
 CORS_ALLOW_CREDENTIALS = True  # Jika menggunakan cookies atau session
+CORS_PREFLIGHT_MAX_AGE = 86400
 
 AUTH_USER_MODEL = 'office.User'
 
