@@ -1,5 +1,4 @@
 #!/bin/bash
-# filepath: d:\kerjaan\Marketing\RYO\program\core\start.sh
 
 set -e
 
@@ -9,7 +8,7 @@ echo "🚀 Starting Django application..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "📁 Script directory: $SCRIPT_DIR"
 
-# Change to the core directory (where manage.py should be)
+# Change to the Django project directory
 cd "$SCRIPT_DIR"
 echo "📁 Working directory: $(pwd)"
 
@@ -44,15 +43,6 @@ python3 manage.py migrate --noinput
 echo "📁 Collecting static files..."
 python3 manage.py collectstatic --noinput --clear
 
-# Copy static files to host directory for WSL Nginx
-echo "📁 Copying static files to host directory..."
-if [ -d "/app/staticfiles-host" ]; then
-    cp -r /app/staticfiles/* /app/staticfiles-host/
-    echo "✅ Static files copied to host directory"
-else
-    echo "⚠️ Host staticfiles directory not mounted"
-fi
-
 # Create superuser if it doesn't exist
 echo "👤 Creating superuser..."
 python3 manage.py shell << 'EOF'
@@ -70,6 +60,10 @@ if not User.objects.filter(username=username).exists():
 else:
     print(f"Superuser '{username}' already exists.")
 EOF
+
+# Start server with Gunicorn
+echo "🌐 Starting Django server with Gunicorn on 0.0.0.0:8080..."
+echo "🔗 Access at: http://localhost:8081"
 
 # Set Gunicorn configuration
 WORKERS=${GUNICORN_WORKERS:-4}
