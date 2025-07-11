@@ -71,7 +71,16 @@ else:
     print(f"Superuser '{username}' already exists.")
 EOF
 
-# Start server
-echo "🌐 Starting Django server on 0.0.0.0:8080..."
-echo "🔗 Access at: http://localhost:8080"
-exec python3 manage.py runserver 0.0.0.0:8080
+# Set Gunicorn configuration
+WORKERS=${GUNICORN_WORKERS:-4}
+TIMEOUT=${GUNICORN_TIMEOUT:-30}
+WSGI_MODULE=${DJANGO_WSGI_MODULE:-core.wsgi:application}
+
+exec gunicorn \
+    --bind 0.0.0.0:8080 \
+    --workers $WORKERS \
+    --timeout $TIMEOUT \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    $WSGI_MODULE
