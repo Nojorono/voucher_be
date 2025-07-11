@@ -10,17 +10,9 @@ ENV DJANGO_SETTINGS_MODULE=core.settings
 WORKDIR /app
 
 # Install system dependencies (PostgreSQL only)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        postgresql-client \
-        gcc \
-        python3-dev \
-        libpq-dev \
-        netcat-openbsd \
-        iputils-ping \
-        dnsutils \
-        curl \
-        build-essential \
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -29,10 +21,10 @@ RUN pip install --upgrade pip wheel setuptools && \
     pip install --prefer-binary --no-cache-dir -r requirements.txt
 
 # Copy project
-COPY . .
+COPY . /app/
 
 # Copy startup script
-COPY start.sh /app/start.sh
+# COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Create directories
