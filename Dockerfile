@@ -13,6 +13,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     netcat-traditional \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -25,7 +26,7 @@ COPY . /app/
 
 # Copy startup script
 # COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+RUN dos2unix /app/start.sh && chmod +x /app/start.sh
 
 # Create directories
 RUN mkdir -p /app/media /app/staticfiles
