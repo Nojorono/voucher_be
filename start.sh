@@ -4,12 +4,8 @@ set -e
 
 echo "🚀 Starting Django application..."
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo "📁 Script directory: $SCRIPT_DIR"
-
 # Change to the Django project directory
-cd "$SCRIPT_DIR"
+cd /app
 echo "📁 Working directory: $(pwd)"
 
 # Check if manage.py exists
