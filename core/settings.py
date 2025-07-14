@@ -38,6 +38,8 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'on')
 ALLOWED_HOSTS = ['localhost', 
                  '127.0.0.1', 
                  '0.0.0.0', 
+                 'apiryo.localhost',     # ✅ ADD: Backend domain localhost
+                 'ryo.localhost',        # ✅ ADD: Frontend domain localhost
                  'apiryo.kcsi.id',  # Backend domain
                  'ryo.kcsi.id',     # Allow frontend domain for admin access
                  'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
@@ -87,6 +89,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:3000",
+    
+    # Localhost domains
+    "http://ryo.localhost",        # ✅ ADD: Frontend localhost domain
+    "http://apiryo.localhost",     # ✅ ADD: Backend localhost domain
+
     "http://ryo.kcsi.id",
     "https://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
@@ -102,6 +109,8 @@ CORS_PREFLIGHT_MAX_AGE = 86400
 
 # CSRF settings for cross-domain
 CSRF_TRUSTED_ORIGINS = [
+    "http://ryo.localhost",
+    "http://apiryo.localhost",
     "https://ryo.kcsi.id",
     "https://apiryo.kcsi.id",
     "http://ryo.kcsi.id",
