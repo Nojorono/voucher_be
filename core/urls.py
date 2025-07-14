@@ -67,7 +67,7 @@ def debug_static(request):
         }, status=500)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('4dm1n^/', admin.site.urls),
     path('health/', health_check),
     path('debug-static/', debug_static),
     path('api/', include('api.urls')),

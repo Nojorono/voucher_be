@@ -35,7 +35,13 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-prod
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'on')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '*']
+ALLOWED_HOSTS = ['localhost', 
+                 '127.0.0.1', 
+                 '0.0.0.0', 
+                 'apiryo.kcsi.id',  # Backend domain
+                 'ryo.kcsi.id',     # Allow frontend domain for admin access
+                 'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
+            ]
 
 # Application definition
 
@@ -73,30 +79,34 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:8000",
     "http://localhost:3000",
-<<<<<<< HEAD
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
-=======
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
     "http://ryo.kcsi.id",
     "https://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://apiryo.kcsi.id",
->>>>>>> efc70cc (update settings.py)
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",  # Frontend
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",  # Backend
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
 CORS_ALLOW_CREDENTIALS = True  # Jika menggunakan cookies atau session
 CORS_PREFLIGHT_MAX_AGE = 86400
+
+# CSRF settings for cross-domain
+CSRF_TRUSTED_ORIGINS = [
+    "https://ryo.kcsi.id",
+    "https://apiryo.kcsi.id",
+    "http://ryo.kcsi.id",
+    "http://apiryo.kcsi.id",
+]
 
 AUTH_USER_MODEL = 'office.User'
 
@@ -178,6 +188,19 @@ AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}  # Cache selama 1 h
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+# Security settings (HTTP mode)
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = None
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Admin security
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_URL = '/staticfiles/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
