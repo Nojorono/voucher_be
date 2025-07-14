@@ -78,12 +78,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:8000",
     "http://localhost:3000",
+<<<<<<< HEAD
     "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
     "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
     "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
     "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
     "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
     "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
+=======
+    "http://ryo.kcsi.id",
+    "https://ryo.kcsi.id",
+    "http://apiryo.kcsi.id",
+    "https://apiryo.kcsi.id",
+>>>>>>> efc70cc (update settings.py)
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
