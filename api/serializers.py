@@ -86,9 +86,36 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 # Wholesale Serializer
 class WholesaleSerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    children_count = serializers.SerializerMethodField()
+    level = serializers.SerializerMethodField()
+    is_root = serializers.SerializerMethodField()
+    is_leaf = serializers.SerializerMethodField()
+    
     class Meta:
         model = Wholesale
-        fields = ['id', 'name', 'phone_number', 'address', 'city', 'pic', 'is_active']
+        fields = [
+            'id', 'name', 'phone_number', 'address', 'city', 'pic', 'is_active',
+            'created_at', 'updated_at', 'parent', 'parent_name',
+            'children_count', 'level', 'is_root', 'is_leaf'
+        ]
+        ref_name = 'APIWholesale'
+
+    def get_children_count(self, obj):
+        """Get count of direct children"""
+        return obj.get_children().count()
+        
+    def get_level(self, obj):
+        """Get hierarchy level"""
+        return obj.get_level()
+        
+    def get_is_root(self, obj):
+        """Check if is root"""
+        return obj.is_root()
+        
+    def get_is_leaf(self, obj):
+        """Check if is leaf"""
+        return obj.is_leaf()
 
     def validate_phone_number(self, value):
         return '62' + value[1:] if value.startswith('0') else value
@@ -112,6 +139,7 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
         model = VoucherRedeem
         fields = ['voucher_code', 'ws_id', 'voucher', 'wholesaler', 'redeemed_at']
         read_only_fields = ['voucher', 'wholesaler', 'redeemed_at']
+        ref_name = 'APIVoucherRedeem'
 
     def validate(self, data):
         voucher_code = data.get('voucher_code')

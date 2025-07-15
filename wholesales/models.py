@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 # Create your models here.
@@ -11,7 +12,7 @@ class Wholesale(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True, help_text="Status aktif atau tidaknya wholesales")
     city = models.CharField(max_length=100, null=True, blank=True)
-    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     
     # Parent-child relationship
     parent = models.ForeignKey(

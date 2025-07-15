@@ -73,6 +73,10 @@ class WholesaleViewSet(viewsets.ModelViewSet):
     queryset = Wholesale.objects.all().order_by('-created_at')
     serializer_class = WholesaleSerializer
     # permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Optimize queryset with select_related for parent"""
+        return Wholesale.objects.select_related('parent').prefetch_related('children').order_by('-created_at')
 
 # Register View
 @api_view(['POST'])

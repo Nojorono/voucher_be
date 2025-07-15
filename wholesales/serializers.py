@@ -16,6 +16,7 @@ class WholesaleSerializer(serializers.ModelSerializer):
             'is_active', 'created_at', 'updated_at', 'parent', 'parent_name',
             'children_count', 'level', 'is_root', 'is_leaf'
         ]
+        ref_name = 'WholesaleHierarchy'
         
     def get_children_count(self, obj):
         """Get count of direct children"""
@@ -46,6 +47,7 @@ class WholesaleTreeSerializer(serializers.ModelSerializer):
             'is_active', 'created_at', 'updated_at', 'parent',
             'children', 'ancestors', 'level'
         ]
+        ref_name = 'WholesaleTree'
         
     def get_children(self, obj):
         """Get all direct children"""
@@ -78,6 +80,7 @@ class WholesaleHierarchySerializer(serializers.ModelSerializer):
             'children', 'all_descendants', 'ancestors', 'level',
             'is_root', 'is_leaf'
         ]
+        ref_name = 'WholesaleHierarchyDetail'
         
     def get_children(self, obj):
         """Get direct children"""
@@ -112,6 +115,7 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoucherRedeem
         fields = '__all__'
+        ref_name = 'WholesaleVoucherRedeem'
         
     def get_wholesale_level(self, obj):
         """Get wholesale hierarchy level"""
