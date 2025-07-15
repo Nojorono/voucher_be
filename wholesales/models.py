@@ -12,9 +12,61 @@ class Wholesale(models.Model):
     is_active = models.BooleanField(default=True, help_text="Status aktif atau tidaknya wholesales")
     city = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
+    
+    # Parent-child relationship
+    parent = models.ForeignKey(
+        'self', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='children',
+        help_text="Parent wholesale untuk struktur hierarki"
+    )
 
     def __str__(self):
         return self.name
+    
+    def get_children(self):
+        """Get all direct children of this wholesale"""
+        return self.children.all()
+    
+    def get_all_descendants(self):
+        """Get all descendants (children, grandchildren, etc.) of this wholesale"""
+        descendants = []
+        for child in self.children.all():
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants())
+        return descendants
+    
+    def get_ancestors(self):
+        """Get all ancestors (parent, grandparent, etc.) of this wholesale"""
+        ancestors = []
+        current = self.parent
+        while current:
+            ancestors.append(current)
+            current = current.parent
+        return ancestors
+    
+    def get_level(self):
+        """Get the level/depth of this wholesale in the hierarchy (0 for root)"""
+        level = 0
+        current = self.parent
+        while current:
+            level += 1
+            current = current.parent
+        return level
+    
+    def is_root(self):
+        """Check if this wholesale is a root (has no parent)"""
+        return self.parent is None
+    
+    def is_leaf(self):
+        """Check if this wholesale is a leaf (has no children)"""
+        return not self.children.exists()
+
+    class Meta:
+        verbose_name = "Wholesale"
+        verbose_name_plural = "Wholesales"
 
 # Model untuk Rekaman Redeem Voucher oleh Wholesales
 class VoucherRedeem(models.Model):
