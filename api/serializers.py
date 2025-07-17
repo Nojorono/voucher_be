@@ -11,6 +11,7 @@ from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
+import os
 
 # Konfigurasi logger
 logger = logging.getLogger(__name__)
@@ -375,13 +376,9 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             """
 
             email_from = settings.DEFAULT_FROM_EMAIL
-            to_emails = [
-                'deny.kusindarto@limamail.net'
-            ]
-            cc_emails = [
-                'banyu.senjana@limamail.net',
-                'dimas.rosadi@limamail.net'
-            ]
+            # Ambil dari environment variable, fallback ke default jika tidak ada
+            to_emails = os.getenv('RETAILER_REGISTRATION_TO_EMAILS', 'banyu.senjana@limamail.net').split(',')
+            cc_emails = [email.strip() for email in os.getenv('RETAILER_REGISTRATION_CC_EMAILS', 'dimas.rosadi@limamail.net').split(',') if email.strip()]
 
             try:
                 email = EmailMessage(

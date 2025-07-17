@@ -10,3 +10,15 @@
 2025-07-17 10:00:58,751 - INFO - Uploaded 1 photos for retailer ahres
 2025-07-17 10:00:58,763 - INFO - Voucher ZL0T5TEKUT generated for retailer ahres
 2025-07-17 10:01:05,283 - INFO - Email sent successfully to ['deny.kusindarto@limamail.net'] with CC to ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
+2025-07-17 21:29:36,568 - INFO - Validating retailer data: {'ws_name': 'test agent IT', 'name': 'TEST IT ABAIKAN', 'phone_number': '0812312', 'address': 'TEST IT ABAIKAN', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA TIMUR', 'kecamatan': 'PULO GADUNG', 'kelurahan': 'PULO GADUNG', 'photos': [<InMemoryUploadedFile: Screenshot 2025-04-28 081337.png (image/png)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-17 21:29:36,646 - INFO - Starting retailer registration process...
+2025-07-17 21:29:36,658 - INFO - Retailer TEST IT ABAIKAN created successfully.
+2025-07-17 21:29:39,499 - INFO - Uploaded 1 photos for retailer TEST IT ABAIKAN
+2025-07-17 21:29:39,510 - INFO - Voucher Q20NH8JD1X generated for retailer TEST IT ABAIKAN
+2025-07-17 21:29:43,900 - INFO - Email sent successfully to ['deny.kusindarto@limamail.net'] with CC to ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
+2025-07-17 21:38:02,185 - INFO - Validating retailer data: {'ws_name': 'test agent IT', 'name': 'IT lagi test lagi ABAIKAN', 'phone_number': '08123123', 'address': 'IT LAGI NGETES LAGI', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA TIMUR', 'kecamatan': 'PULO GADUNG', 'kelurahan': 'PULO GADUNG', 'photos': [<InMemoryUploadedFile: Screenshot 2025-04-28 092302.png (image/png)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-17 21:38:02,280 - INFO - Starting retailer registration process...
+2025-07-17 21:38:02,284 - INFO - Retailer IT lagi test lagi ABAIKAN created successfully.
+2025-07-17 21:38:05,399 - INFO - Uploaded 1 photos for retailer IT lagi test lagi ABAIKAN
+2025-07-17 21:38:05,408 - INFO - Voucher W3VHF8ZMMA generated for retailer IT lagi test lagi ABAIKAN
+2025-07-17 21:38:09,396 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']

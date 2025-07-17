@@ -200,18 +200,31 @@ AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}  # Cache selama 1 h
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+# HTTPS/SSL Settings (sesuaikan dengan environment)
+if not DEBUG:
+    # Production security settings
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
+    SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
+    CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
+    X_FRAME_OPTIONS = 'DENY'
+else:
+    # Development settings
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 # Security settings (HTTP mode)
-SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = None
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Admin security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/staticfiles/'

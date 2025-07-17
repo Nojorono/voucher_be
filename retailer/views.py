@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import csrf_exempt
 from .models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale
 import random
@@ -16,6 +17,7 @@ def format_phone_number(phone_number):
     return phone_number
 
 # Halaman untuk pendaftaran dan upload foto
+@csrf_exempt
 def retailer_register_upload(request):
     if request.method == 'POST':
         ws_name = request.POST.get('ws_name', '').strip()
