@@ -4,3 +4,9 @@
 2025-03-17 17:49:43,777 - INFO - Uploaded 3 photos for retailer 425
 2025-03-17 17:49:43,819 - INFO - Voucher 37L7DKDI59 generated for retailer 425
 2025-03-17 17:49:46,168 - INFO - Email sent successfully to ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']
+2025-07-17 10:00:55,585 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'ahres', 'phone_number': '081818181818', 'address': 'Duren Sawit, East Jakarta.', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA TIMUR', 'kecamatan': 'DUREN SAWIT', 'kelurahan': 'DUREN SAWIT', 'photos': [<InMemoryUploadedFile: Screenshot 2025-07-14 104557.png (image/png)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-17 10:00:55,663 - INFO - Starting retailer registration process...
+2025-07-17 10:00:55,674 - INFO - Retailer ahres created successfully.
+2025-07-17 10:00:58,751 - INFO - Uploaded 1 photos for retailer ahres
+2025-07-17 10:00:58,763 - INFO - Voucher ZL0T5TEKUT generated for retailer ahres
+2025-07-17 10:01:05,283 - INFO - Email sent successfully to ['deny.kusindarto@limamail.net'] with CC to ['banyu.senjana@limamail.net', 'dimas.rosadi@limamail.net']

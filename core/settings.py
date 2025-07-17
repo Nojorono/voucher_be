@@ -37,7 +37,8 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'on')
 
 ALLOWED_HOSTS = ['localhost', 
                  '127.0.0.1', 
-                 '0.0.0.0', 
+                 '0.0.0.0',
+                 '10.0.63.158',  # Local network IP for development 
                  'apiryo.localhost',     # ✅ ADD: Backend domain localhost
                  'ryo.localhost',        # ✅ ADD: Frontend domain localhost
                  'apiryo.kcsi.id',  # Backend domain
@@ -191,7 +192,8 @@ AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')  # Ganti dengan region AWS 
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_DEFAULT_ACL = 'public-read'  # Pastikan file bisa diakses publik
+# AWS_DEFAULT_ACL = 'public-read'  # Pastikan file bisa diakses publik
+AWS_DEFAULT_ACL = None  # Pastikan file bisa diakses publik
 AWS_S3_FILE_OVERWRITE = False  # Hindari file dengan nama yang sama ditimpa
 AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}  # Cache selama 1 hari
 
@@ -211,8 +213,8 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
-STATIC_URL = '/staticfiles/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/staticfiles/'
 
 # Additional directories for staticfiles
 STATICFILES_DIRS = [
