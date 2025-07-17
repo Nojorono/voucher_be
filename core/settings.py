@@ -82,7 +82,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
-CORS_ALLOW_ALL_ORIGINS = True  # Disable this if you want to restrict origins
+CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5174",
     "http://localhost:8000",
