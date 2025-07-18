@@ -73,6 +73,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # 'core.middleware.ALBCORSMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -210,9 +211,11 @@ AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_DEFAULT_ACL = 'public-read'  # Pastikan file bisa diakses publik
-# AWS_DEFAULT_ACL = None  # Pastikan file bisa diakses publik
 AWS_S3_FILE_OVERWRITE = False  # Hindari file dengan nama yang sama ditimpa
 AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}  # Cache selama 1 hari
+# Tambahan untuk file upload CORS
+AWS_S3_ADDRESSING_STYLE = 'virtual'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
