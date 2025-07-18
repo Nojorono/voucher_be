@@ -235,13 +235,13 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
     SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
     CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
-    X_FRAME_OPTIONS = 'DENY'
 else:
     # Development settings
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
-    X_FRAME_OPTIONS = 'SAMEORIGIN'
+    
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Security settings (HTTP mode)
 SECURE_PROXY_SSL_HEADER = None
