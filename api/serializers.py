@@ -383,9 +383,12 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             """
 
             email_from = settings.DEFAULT_FROM_EMAIL
-            # Ambil dari environment variable, fallback ke default jika tidak ada
             to_emails = os.getenv('RETAILER_REGISTRATION_TO_EMAILS', 'banyu.senjana@limamail.net').split(',')
             cc_emails = [email.strip() for email in os.getenv('RETAILER_REGISTRATION_CC_EMAILS', 'dimas.rosadi@limamail.net').split(',') if email.strip()]
+
+            logger.info(f"Email from: {email_from}")
+            logger.info(f"To emails: {to_emails}")
+            logger.info(f"CC emails: {cc_emails}")
 
             try:
                 email = EmailMessage(
@@ -398,12 +401,21 @@ class RetailerRegistrationSerializer(serializers.Serializer):
                 email.content_subtype = 'html'  # Agar email dikirim dalam format HTML
                 email.send(fail_silently=False)
                 logger.info(f"Email sent successfully to {to_emails} with CC to {cc_emails}")
+                logger.info("Email sent successfully!")
+                logger.info(f"Email sent to {to_emails} with CC to {cc_emails}")
             except Exception as e:
                 logger.exception("Error sending email")
+                logger.exception("Email sending exception details:")
+
+            logger.info("=== EMAIL SENDING END ===")
 
         # Jalankan fungsi `email_task` dalam thread terpisah
-        email_thread = threading.Thread(target=email_task)
-        email_thread.start()    
+        try:
+            email_thread = threading.Thread(target=email_task)
+            email_thread.start()
+            logger.info("Email thread started successfully")
+        except Exception as e:
+            logger.error(f"Error starting email thread: {str(e)}")    
 
 # Voucher Serializer
 class VoucherSerializer(serializers.ModelSerializer):
