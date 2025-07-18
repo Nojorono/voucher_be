@@ -360,17 +360,9 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             
             # ✅ Fix: Use request host instead of sites framework
             request = self.context.get('request')
-            if request:
-                # Get hostname from request
-                hostname = request.get_host()
-                # Use appropriate protocol
-                protocol = 'https' if request.is_secure() else 'http'
-            else:
-                # Fallback values
-                hostname = 'localhost:5174'
-                protocol = 'http'
+            hostname = os.getenv('HOSTNAME')
 
-            verification_url = f"{protocol}://{hostname}/verification"
+            verification_url = f"{hostname}/verification"
 
             html_content = f"""
                 <html>
