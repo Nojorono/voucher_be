@@ -34,3 +34,27 @@
 2025-07-18 10:21:20,607 - INFO - Uploaded 1 photos for retailer asdasd
 2025-07-18 10:21:20,617 - INFO - Voucher RNT4VVJJSY generated for retailer asdasd
 2025-07-18 10:21:28,204 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 11:11:20,998 - INFO - Validating retailer data: {'ws_name': 'Javan Cigars Offline Shop', 'name': 'aasdasdassdqwe', 'phone_number': '060606', 'address': 'sfsd', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'KEBAWETAN (KABAWETAN)', 'kelurahan': 'AIR SEMPIANG', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 11:11:21,050 - INFO - Starting retailer registration process...
+2025-07-18 11:11:21,056 - INFO - Retailer aasdasdassdqwe created successfully.
+2025-07-18 11:14:22,281 - INFO - Validating retailer data: {'ws_name': 'Javan Cigars Offline Shop', 'name': 'fdfdfd', 'phone_number': '787878', 'address': 'asdd', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'BERMANI ILIR', 'kelurahan': 'AIR RAMAN', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 11:14:22,332 - INFO - Starting retailer registration process...
+2025-07-18 11:14:22,347 - INFO - Retailer fdfdfd created successfully.
+2025-07-18 11:14:23,745 - INFO - Uploaded 1 photos for retailer fdfdfd
+2025-07-18 11:14:23,746 - INFO - Voucher MN4IHLGTQ9 generated for retailer fdfdfd
+2025-07-18 11:14:23,746 - INFO - Response data prepared with 1 photo URLs
+2025-07-18 11:14:26,894 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 11:28:15,362 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'asdasdasd', 'phone_number': '05050505', 'address': 'sfasd', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'BERMANI ILIR', 'kelurahan': 'AIR RAMAN', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 11:28:15,417 - INFO - Starting retailer registration process...
+2025-07-18 11:28:15,434 - INFO - Retailer asdasdasd created successfully.
+2025-07-18 11:28:17,905 - INFO - Uploaded 1 photos for retailer asdasdasd
+2025-07-18 11:28:17,915 - INFO - Voucher WN8ZEB6UB5 generated for retailer asdasdasd
+2025-07-18 11:28:17,920 - INFO - Response data prepared with 1 photo URLs
+2025-07-18 11:28:21,273 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 13:25:35,937 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'asd lagi dan lagi', 'phone_number': '050505', 'address': 'askdjlka', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'BERMANI ILIR', 'kelurahan': 'AIR RAMAN', 'photos': [<InMemoryUploadedFile: order Fulfillments.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 13:25:35,992 - INFO - Starting retailer registration process...
+2025-07-18 13:25:36,001 - INFO - Retailer asd lagi dan lagi created successfully.
+2025-07-18 13:25:37,980 - INFO - Uploaded 1 photos for retailer asd lagi dan lagi
+2025-07-18 13:25:37,988 - INFO - Voucher UBBV6Y3ZEA generated for retailer asd lagi dan lagi
+2025-07-18 13:25:37,991 - INFO - Response data prepared with 1 photo URLs
+2025-07-18 13:25:41,232 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']

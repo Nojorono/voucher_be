@@ -57,5 +57,5 @@ class RetailerPhoto(models.Model):
     # ✅ Debug method
     def get_full_url(self):
         if self.image:
-            return f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{self.image.name}"
+            return f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.ap-southeast-3.amazonaws.com/{self.image.name}"
         return None
