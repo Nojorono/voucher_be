@@ -219,14 +219,9 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 
 # Additional settings
-AWS_QUERYSTRING_AUTH = False
 AWS_S3_ADDRESSING_STYLE = 'virtual'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_S3_VERIFY = True
-
-# ✅ Public URL access
-AWS_S3_URL_PROTOCOL = 'https:'
-AWS_S3_USE_SSL = True
+AWS_QUERYSTRING_AUTH = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

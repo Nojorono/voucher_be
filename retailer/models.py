@@ -45,17 +45,5 @@ class RetailerPhoto(models.Model):
     rejected_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Photo of {self.retailer.name} - {self.remarks}"
+        return f"Photo of {self.retailer.name}"
 
-    # ✅ Add method untuk get public URL
-    @property
-    def image_url(self):
-        if self.image:
-            return self.image.url
-        return None
-    
-    # ✅ Debug method
-    def get_full_url(self):
-        if self.image:
-            return f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{self.image.name}"
-        return None
