@@ -227,9 +227,9 @@ AWS_QUERYSTRING_AUTH = False
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
     
-SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
-SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
-CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
+SECURE_SSL_REDIRECT = True  # Set True jika menggunakan HTTPS
+SESSION_COOKIE_SECURE = True  # Set True jika menggunakan HTTPS
+CSRF_COOKIE_SECURE = True     # Set True jika menggunakan HTTPS
 
 # Security settings (HTTP mode)
 SECURE_PROXY_SSL_HEADER = None
