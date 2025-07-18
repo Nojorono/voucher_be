@@ -44,6 +44,8 @@ ALLOWED_HOSTS = ['localhost',
                  'apiryo.kcsi.id',  # Backend domain
                  'ryo.kcsi.id',     # Allow frontend domain for admin access
                  'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
+                 '.amazonaws.com',  # ← Wildcard untuk semua AWS domains
+                 '.kcsi.id',        # ← Wildcard untuk domain kcsi.id
             ]
 
 # Application definition
@@ -82,6 +84,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
+
+# AWS ALB Configuration
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5174",
@@ -95,27 +103,36 @@ CORS_ALLOWED_ORIGINS = [
     "http://ryo.localhost",        # ✅ ADD: Frontend localhost domain
     "http://apiryo.localhost",     # ✅ ADD: Backend localhost domain
 
+    # Production domains
     "http://ryo.kcsi.id",
     "https://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://apiryo.kcsi.id",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",  # Frontend
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",  # Backend
+    
+    # ALB domains - Add semua kemungkinan
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
-CORS_ALLOW_CREDENTIALS = True  # Jika menggunakan cookies atau session
+CORS_ALLOW_CREDENTIALS = False  # Jika menggunakan cookies atau session
 CORS_PREFLIGHT_MAX_AGE = 86400
 
 # CSRF settings for cross-domain
 CSRF_TRUSTED_ORIGINS = [
-    "http://ryo.localhost",
-    "http://apiryo.localhost",
-    "https://ryo.kcsi.id",
-    "https://apiryo.kcsi.id",
     "http://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
+    "https://ryo.kcsi.id",
+    "https://apiryo.kcsi.id",
+    "http://ryo.localhost",
+    "http://apiryo.localhost",
+    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",  # ← Add ALB
+    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com", # ← Add ALB HTTPS
 ]
 
 AUTH_USER_MODEL = 'office.User'
