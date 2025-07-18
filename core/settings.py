@@ -226,22 +226,10 @@ AWS_QUERYSTRING_AUTH = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-# HTTPS/SSL Settings (sesuaikan dengan environment)
-if not DEBUG:
-    # Production security settings
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
-    SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
-    CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
-else:
-    # Development settings
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
     
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
+SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
+CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
 
 # Security settings (HTTP mode)
 SECURE_PROXY_SSL_HEADER = None
@@ -251,6 +239,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 # Admin security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/staticfiles/'
