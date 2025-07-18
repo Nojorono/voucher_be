@@ -332,10 +332,16 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
         logger.info(f"Retailer {retailer.name} created successfully.")
 
+        uploaded_photos = []
         for index, photo in enumerate(photos):
             compressed_photo = self.compress_image(photo)
             remarks = photo_remarks[index] if index < len(photo_remarks) else ''
-            RetailerPhoto.objects.create(retailer=retailer, image=photo, remarks=remarks)
+            retailer_photo = RetailerPhoto.objects.create(
+                retailer=retailer, 
+                image=photo, 
+                remarks=remarks
+            )
+            uploaded_photos.append(retailer_photo)
 
         logger.info(f"Uploaded {len(photos)} photos for retailer {retailer.name}")
 
@@ -347,10 +353,26 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         # Send email asynchronously using threading
         self.send_email_async(retailer, wholesale)
 
-        return {
-            "voucher_code": voucher_code,
-            "retailer_id": retailer.id
+        response_data = {
+            'retailer_id': retailer.id,
+            'voucher_code': voucher_code,
+            'message': 'Retailer registered successfully',
+            'photos': []
         }
+
+        # ✅ Add photo URLs to response
+        for photo in uploaded_photos:
+            photo_data = {
+                'id': photo.id,
+                'remarks': photo.remarks,
+                'url': photo.image.url if photo.image else None,
+                'full_url': f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{photo.image.name}" if photo.image else None
+            }
+            response_data['photos'].append(photo_data)
+        
+        logger.info(f"Response data prepared with {len(response_data['photos'])} photo URLs")
+        
+        return response_data
 
     def send_email_async(self, retailer, wholesale):
         """Mengirim email secara asynchronous menggunakan threading"""
