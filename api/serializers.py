@@ -357,22 +357,37 @@ class RetailerRegistrationSerializer(serializers.Serializer):
 
         def email_task():
             subject = 'Verifikasi Retailer'
+            
+            # ✅ Fix: Use request host instead of sites framework
+            request = self.context.get('request')
+            if request:
+                # Get hostname from request
+                hostname = request.get_host()
+                # Use appropriate protocol
+                protocol = 'https' if request.is_secure() else 'http'
+            else:
+                # Fallback values
+                hostname = 'localhost:5174'
+                protocol = 'http'
+
+            verification_url = f"{protocol}://{hostname}/verification"
+
             html_content = f"""
-            <html>
-            <body>
-                <p>Dear Admin,</p>
-                <p>Berkaitan dengan program Super Perdana, Retailer telah melakukan pendaftaran dengan detail berikut:</p>
-                <table>
-                    <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
-                    <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
-                    <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
-                    <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
-                    <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
-                </table>
-                <p>Mohon segera melakukan verifikasi data mereka dengan klik tombol di bawah ini:</p>
-                <p><a href="https://ryoapp.niaganusaabadi.co.id/verification">Verifikasi Sekarang</a></p>
-            </body>
-            </html>
+                <html>
+                <body>
+                    <p>Dear Admin,</p>
+                    <p>Berkaitan dengan program Super Perdana, Retailer telah melakukan pendaftaran dengan detail berikut:</p>
+                    <table>
+                        <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
+                        <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
+                        <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
+                        <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
+                        <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
+                    </table>
+                    <p>Mohon segera melakukan verifikasi data mereka dengan klik tombol di bawah ini:</p>
+                    <p><a href="{verification_url}">Verifikasi Sekarang</a></p>
+                </body>
+                </html>
             """
 
             email_from = settings.DEFAULT_FROM_EMAIL

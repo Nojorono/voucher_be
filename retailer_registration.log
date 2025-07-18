@@ -34,3 +34,32 @@
 2025-07-18 10:21:20,607 - INFO - Uploaded 1 photos for retailer asdasd
 2025-07-18 10:21:20,617 - INFO - Voucher RNT4VVJJSY generated for retailer asdasd
 2025-07-18 10:21:28,204 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 14:00:56,066 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'test lagi dan ladiiiii', 'phone_number': '030404', 'address': 'askdjkl', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'BERMANI ILIR', 'kelurahan': 'AIR RAMAN', 'photos': [<InMemoryUploadedFile: future proses Nojorono.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 14:00:56,117 - INFO - Starting retailer registration process...
+2025-07-18 14:00:56,126 - INFO - Retailer test lagi dan ladiiiii created successfully.
+2025-07-18 14:00:58,991 - INFO - Uploaded 1 photos for retailer test lagi dan ladiiiii
+2025-07-18 14:00:58,999 - INFO - Voucher QGB948H482 generated for retailer test lagi dan ladiiiii
+2025-07-18 14:01:02,564 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 14:12:27,043 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'adasd', 'phone_number': '34354523', 'address': 'asdasd', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'KEBAWETAN (KABAWETAN)', 'kelurahan': 'BABAKAN BOGOR', 'photos': [<InMemoryUploadedFile: future proses Nojorono.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 14:12:27,100 - INFO - Starting retailer registration process...
+2025-07-18 14:12:27,111 - INFO - Retailer adasd created successfully.
+2025-07-18 14:12:28,869 - INFO - Uploaded 1 photos for retailer adasd
+2025-07-18 14:12:28,873 - INFO - Voucher FOVK1NUCR2 generated for retailer adasd
+2025-07-18 14:12:31,892 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 14:15:46,793 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'test lagi dah ini', 'phone_number': '098755342', 'address': 'kjaklsjdlkaj', 'provinsi': 'BANTEN', 'kota': 'LEBAK', 'kecamatan': 'BAYAH', 'kelurahan': 'BAYAH TIMUR', 'photos': [<InMemoryUploadedFile: future proses Nojorono.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 14:15:46,859 - INFO - Starting retailer registration process...
+2025-07-18 14:15:46,867 - INFO - Retailer test lagi dah ini created successfully.
+2025-07-18 14:15:48,813 - INFO - Uploaded 1 photos for retailer test lagi dah ini
+2025-07-18 14:15:48,821 - INFO - Voucher KY32PRU0JU generated for retailer test lagi dah ini
+2025-07-18 14:15:52,680 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 14:17:27,684 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'asdasdasd', 'phone_number': '1231435357468', 'address': 'asdasd', 'provinsi': 'MALUKU UTARA', 'kota': 'PULAU MOROTAI', 'kecamatan': 'MOROTAI JAYA', 'kelurahan': 'CEMPAKA', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 14:17:27,732 - INFO - Starting retailer registration process...
+2025-07-18 14:17:27,740 - INFO - Retailer asdasdasd created successfully.
+2025-07-18 14:17:29,373 - INFO - Uploaded 1 photos for retailer asdasdasd
+2025-07-18 14:17:29,373 - INFO - Voucher 8PSCYSBTX8 generated for retailer asdasdasd
+2025-07-18 14:19:41,654 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'asdasdagasd', 'phone_number': '1235678999', 'address': 'asdsa', 'provinsi': 'BANTEN', 'kota': 'LEBAK', 'kecamatan': 'BOJONGMANIK', 'kelurahan': 'CIMAYANG', 'photos': [<InMemoryUploadedFile: future proses Nojorono.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 14:19:41,707 - INFO - Starting retailer registration process...
+2025-07-18 14:19:41,720 - INFO - Retailer asdasdagasd created successfully.
+2025-07-18 14:19:43,766 - INFO - Uploaded 1 photos for retailer asdasdagasd
+2025-07-18 14:19:43,776 - INFO - Voucher NKYM51T6OQ generated for retailer asdasdagasd
+2025-07-18 14:19:46,732 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
