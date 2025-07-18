@@ -22,3 +22,15 @@
 2025-07-17 21:38:05,399 - INFO - Uploaded 1 photos for retailer IT lagi test lagi ABAIKAN
 2025-07-17 21:38:05,408 - INFO - Voucher W3VHF8ZMMA generated for retailer IT lagi test lagi ABAIKAN
 2025-07-17 21:38:09,396 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-18 10:15:32,968 - INFO - Validating retailer data: {'ws_name': 'Javan Cigars Offline Shop', 'name': 'asdasd', 'phone_number': '1231232', 'address': 'asdsad', 'provinsi': 'BANTEN', 'kota': 'LEBAK', 'kecamatan': 'BAYAH', 'kelurahan': 'BAYAH BARAT', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 10:15:33,023 - INFO - Starting retailer registration process...
+2025-07-18 10:15:33,036 - INFO - Retailer asdasd created successfully.
+2025-07-18 10:16:52,243 - INFO - Validating retailer data: {'ws_name': 'Javan Cigars Offline Shop', 'name': 'asdsad', 'phone_number': '123213', 'address': '112321', 'provinsi': 'ACEH', 'kota': 'ACEH UTARA', 'kecamatan': 'NIBONG', 'kelurahan': 'ALUE BUMAN', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 10:16:52,303 - INFO - Starting retailer registration process...
+2025-07-18 10:16:52,311 - INFO - Retailer asdsad created successfully.
+2025-07-18 10:21:19,213 - INFO - Validating retailer data: {'ws_name': 'Javan Cigars Offline Shop', 'name': 'asdasd', 'phone_number': '123123', 'address': 'asdasd', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'BERMANI ILIR', 'kelurahan': 'AIR RAMAN', 'photos': [<InMemoryUploadedFile: Downstream.jpeg (image/jpeg)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-18 10:21:19,277 - INFO - Starting retailer registration process...
+2025-07-18 10:21:19,285 - INFO - Retailer asdasd created successfully.
+2025-07-18 10:21:20,607 - INFO - Uploaded 1 photos for retailer asdasd
+2025-07-18 10:21:20,617 - INFO - Voucher RNT4VVJJSY generated for retailer asdasd
+2025-07-18 10:21:28,204 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
