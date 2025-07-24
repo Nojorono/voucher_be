@@ -69,13 +69,13 @@ def debug_static(request):
         }, status=500)
 
 main_urlpatterns = [
-    path('/', include('api.urls')),
     path('4dm1nxXx/', admin.site.urls),
     path('health/', health_check),
     path('debug-static/', debug_static),
     path('office/', include('office.urls')),
     path('retailer/', include('retailer.urls')),
     path('wholesales/', include('wholesales.urls')),
+    path('/', include('api.urls')),
 ]
 
 # Check if we need to add subfolder support
