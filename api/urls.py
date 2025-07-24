@@ -37,7 +37,6 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-import os
 
 router = DefaultRouter()
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
@@ -46,35 +45,45 @@ router.register(r'voucherlimit', VoucherLimitViewSet, basename='voucherlimit')
 
 
 urlpatterns = [
+    # Authentication endpoints - langsung di root level
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
+    path('logout/', logout, name='logout'),
+    
+    # password management
+    path('reset_password/', reset_password, name='reset_password'),
+    path('change_password/', change_password, name='change_password'),
+
+    # User management routes
     path('user/register/', register, name='register'),
     path('user/update/<int:user_id>/', admin_update_user, name='admin-update-user'),
     path('user/delete/<int:user_id>/', admin_delete_user, name='admin-delete-user'),
-    path('reset_password/', reset_password, name='reset_password'),
-    path('login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
-    path('change_password/', change_password, name='change_password'),
-    path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
-    path('submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
-    # path('list_redeem_voucher/', list_trx_voucher, name='list_trx_voucher'),
-    path('redeem_report/', redeem_report, name='redeem_report'),
-    path('list_photos/', list_photos, name='list_photos'),
-    path('list_vouchers/', list_vouchers, name='list_vouchers'),
-    path('office_verification_report/', office_verification_report, name='office_verification_report'),
-    path('retailer_register_upload/', retailer_register_upload, name='retailer_register_upload'),
-    path('logout/', logout, name='logout'),
-    path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),  # Custom route
     path('user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),  # Custom route
     path('user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),  # Custom route
     path('user/', UserViewSet.as_view({'get': 'list_users'}), name='user-list'),  # Custom route
+
+    # Retailer, Wholesale, Voucher management
+    path('list_photos/', list_photos, name='list_photos'),
+    path('retailer_register_upload/', retailer_register_upload, name='retailer_register_upload'),
+    path('list_vouchers/', list_vouchers, name='list_vouchers'),
+    path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
+    path('submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
+    path('redeem_report/', redeem_report, name='redeem_report'),
+    path('office_verification_report/', office_verification_report, name='office_verification_report'),
+    path('report/list_retailers/', list_retailers, name='list_retailers'),
+    path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
+   
+    # location and kodepos management
     path('kodepos/', kodepos_list, name='kodepos-list'),
     path('kelurahan/', kelurahan_list, name='kelurahan-list'),
     path('kecamatan/', kecamatan_list, name='kecamatan-list'),
     path('kota/', kota_list, name='kota-list'),
     path('provinsi/', provinsi_list, name='provinsi-list'),
     path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
-    path('report/list_retailers/', list_retailers, name='list_retailers'),
-    path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
+
+    # Item and Reimburse management
     path('items/', list_items, name='list-items'),
     path('submit_reimburse/', submit_reimburse, name='submit_reimburse'),
     path('list_reimburse/', list_reimburse, name='list_reimburse'),
@@ -85,25 +94,7 @@ urlpatterns = [
     path('', include(router.urls)),
 ]
 
-from django.conf import settings
-
-SUB_PATH = os.getenv('SUB_PATH', '')
-print(f"Using SUB_PATH: {SUB_PATH}")
-
-# ✅ Custom schema view dengan dynamic URL handling
-def get_swagger_base_url():
-    """Get base URL untuk Swagger tanpa double prefix"""
-    force_script_name = getattr(settings, 'FORCE_SCRIPT_NAME', None)
-    
-    if force_script_name:
-        # Untuk Kong environment, base URL sudah include prefix
-        return None  # Let drf-yasg auto-detect
-    else:
-        # Development environment
-        return None
-
-
-# ✅ Add API documentation jika menggunakan drf-yasg
+# ✅ Add API documentation
 try:
     from drf_yasg.views import get_schema_view
     from drf_yasg import openapi
@@ -117,10 +108,9 @@ try:
         ),
         public=True,
         permission_classes=[permissions.AllowAny],
-        url=get_swagger_base_url(),  # Use dynamic base URL
     )
     
-    # ✅ Add to urlpatterns
+    # Add docs URLs
     docs_urls = [
         path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
         path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
@@ -128,8 +118,10 @@ try:
     ]
     
     urlpatterns += docs_urls
-    print("Added API documentation URLs")
+    print("✅ Added API documentation URLs")
 
 except ImportError:
     schema_view = None
+    print("⚠️ drf-yasg not available, skipping API docs")
 
+print(f"API URL patterns configured ({len(urlpatterns)} patterns)")

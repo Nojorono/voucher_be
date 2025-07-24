@@ -35,26 +35,27 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-prod
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'on')
 
-# ✅ Add FORCE_SCRIPT_NAME untuk sub-path
 SUB_PATH = os.getenv('SUB_PATH', '')
+USE_KONG = os.getenv('USE_KONG', 'false').lower() == 'true'
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
 
 hostname = os.getenv('HOSTNAME', '')
 is_production = os.getenv('ENVIRONMENT', 'development') == 'production'
 is_kong_environment = 'kcsi.id' in hostname or os.getenv('USE_KONG', 'false').lower() == 'true'
 
-if SUB_PATH and is_kong_environment and is_production:
-    # Production dengan Kong Gateway
-    FORCE_SCRIPT_NAME = SUB_PATH
-    print(f"Kong production mode: FORCE_SCRIPT_NAME={FORCE_SCRIPT_NAME}")
+# Set FORCE_SCRIPT_NAME only for reverse URL generation
+if USE_KONG and ENVIRONMENT == 'production' and SUB_PATH:
+    FORCE_SCRIPT_NAME = f'{SUB_PATH}'
+    print(f"Production mode: FORCE_SCRIPT_NAME={FORCE_SCRIPT_NAME}")
 else:
-    # Development server tanpa Kong
     FORCE_SCRIPT_NAME = None
-    print(f"Development mode: FORCE_SCRIPT_NAME disabled")
+    print("Development mode: FORCE_SCRIPT_NAME disabled")
 
+# Debug output
 print(f"DEBUG: {DEBUG}")
 print(f"SUB_PATH: {SUB_PATH}")
-print(f"is_kong_environment: {is_kong_environment}")
-print(f"is_production: {is_production}")
+print(f"USE_KONG: {USE_KONG}")
+print(f"ENVIRONMENT: {ENVIRONMENT}")
 print(f"FORCE_SCRIPT_NAME: {FORCE_SCRIPT_NAME}")
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or ['localhost', 

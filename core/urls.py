@@ -32,10 +32,16 @@ def health_check(request):
         response_data = {
             "status": "healthy", 
             "service": "ryo-backend",
+            "force_script_name": getattr(settings, 'FORCE_SCRIPT_NAME', None),
+            "debug": getattr(settings, 'DEBUG', False),
+            "environment": getattr(settings, 'ENVIRONMENT', 'unknown'),
             "static_url": getattr(settings, 'STATIC_URL', '/static/'),
             "static_root": getattr(settings, 'STATIC_ROOT', '/app/staticfiles'),
             "debug": getattr(settings, 'DEBUG', False),
-            "timestamp": str(request.META.get('HTTP_DATE', 'N/A'))
+            "timestamp": str(request.META.get('HTTP_DATE', 'N/A')),
+            "media_url": getattr(settings, 'MEDIA_URL', '/media/'),
+            "request_path": request.path,
+            "request_path_info": request.path_info,
         }
         return JsonResponse(response_data, safe=False)
     except Exception as e:
@@ -81,29 +87,22 @@ urlpatterns = [
 ]
 
 # ✅ Add API docs at root level for development
-if settings.DEBUG:
-    from api.urls import schema_view
+if hasattr(settings, 'DEBUG') and settings.DEBUG:
     try:
-        urlpatterns += [
-            path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-        ]
-        print("Added docs/ URL pattern for development")
-    except:
+        from api.urls import schema_view
+        if schema_view:
+            urlpatterns += [
+                path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+                path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+            ]
+            print("Added docs URLs for development")
+    except (ImportError, AttributeError):
         pass
     
 # Serve static and media files in development/WSGI mode
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# ✅ Wrap dengan SUB_PATH jika menggunakan Kong
-if SUB_PATH and not settings.DEBUG:
-    print(f"Wrapping URLs with SUB_PATH: /{SUB_PATH}/")
-    from django.urls import path, include
-    
-    # Wrap all URLs dengan SUB_PATH
-    wrapped_patterns = [path(f'{SUB_PATH}/', include(urlpatterns))]
-    urlpatterns = wrapped_patterns
-
 print("URL patterns configured:")
-for pattern in urlpatterns:
-    print(f"  {pattern}")
+for i, pattern in enumerate(urlpatterns):
+    print(f"  {i+1}. {pattern}")
