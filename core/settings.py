@@ -89,9 +89,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 # AWS ALB Configuration
-FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME')
-if not FORCE_SCRIPT_NAME:
-    FORCE_SCRIPT_NAME = None
+# FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -252,7 +250,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = f'{FORCE_SCRIPT_NAME}/staticfiles/'
+STATIC_URL = '/staticfiles/'
 
 # Additional directories for staticfiles
 STATICFILES_DIRS = [
@@ -269,7 +267,7 @@ STATICFILES_FINDERS = [
 # Media files for local development (when not using S3)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # MEDIA_URL = 'media/'
-MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else f'{FORCE_SCRIPT_NAME}/media/'
+MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
