@@ -42,6 +42,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or ['localhost',
                  'apiryo.localhost',     # ✅ ADD: Backend domain localhost
                  'ryo.localhost',        # ✅ ADD: Frontend domain localhost
                  'apiryo.kcsi.id',  # Backend domain
+		 'backend-ryo',
+                 'api.kcsi.id',
                  'ryo.kcsi.id',     # Allow frontend domain for admin access
                  'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
                  '.amazonaws.com',  # ← Wildcard untuk semua AWS domains
@@ -87,9 +89,10 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 # AWS ALB Configuration
+FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME', '')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
@@ -99,7 +102,8 @@ CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
     "http://127.0.0.1:5174",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:3000",
-    
+    "http://api.kcsi.id",
+    "http://localhost:8000",
     # Localhost domains
     "http://ryo.localhost",        # ✅ ADD: Frontend localhost domain
     "http://apiryo.localhost",     # ✅ ADD: Backend localhost domain
@@ -126,6 +130,7 @@ CORS_PREFLIGHT_MAX_AGE = 86400
 
 # CSRF settings for cross-domain
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') or [
+    "http://api.kcsi.id",           # ✅ ADD: API Gateway HTTP
     "http://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://ryo.kcsi.id",
@@ -230,6 +235,9 @@ AWS_QUERYSTRING_AUTH = False
 SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
 SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
 CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
+#SECURE_HSTS_SECONDS=31536000
+#SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+#SECURE_HSTS_PRELOAD=True
 
 # Security settings (HTTP mode)
 SECURE_PROXY_SSL_HEADER = None

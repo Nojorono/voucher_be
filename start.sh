@@ -58,8 +58,8 @@ else:
 EOF
 
 # Start server with Gunicorn
-echo "🌐 Starting Django server with Gunicorn on 0.0.0.0:8080..."
-echo "🔗 Access at: http://localhost:8081"
+echo "🌐 Starting Django server with Gunicorn on 0.0.0.0:9002..."
+echo "🔗 Access at: http://localhost:9002"
 
 # Set Gunicorn configuration
 WORKERS=${GUNICORN_WORKERS:-4}
@@ -67,7 +67,7 @@ TIMEOUT=${GUNICORN_TIMEOUT:-30}
 WSGI_MODULE=${DJANGO_WSGI_MODULE:-core.wsgi:application}
 
 exec gunicorn \
-    --bind 0.0.0.0:8080 \
+    --bind 0.0.0.0:9002 \
     --workers $WORKERS \
     --timeout $TIMEOUT \
     --access-logfile - \

@@ -32,7 +32,7 @@ RUN dos2unix /app/start.sh && chmod +x /app/start.sh
 RUN mkdir -p /app/media /app/staticfiles
 
 # Expose port
-EXPOSE 8080
+EXPOSE 9002
 
 # Run startup script
 CMD ["/app/start.sh"]

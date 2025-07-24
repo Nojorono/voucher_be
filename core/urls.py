@@ -28,6 +28,7 @@ def health_check(request):
         response_data = {
             "status": "healthy", 
             "service": "ryo-backend",
+            "force_script_name": getattr(settings, 'FORCE_SCRIPT_NAME', ''),
             "static_url": getattr(settings, 'STATIC_URL', '/static/'),
             "static_root": getattr(settings, 'STATIC_ROOT', '/app/staticfiles'),
             "debug": getattr(settings, 'DEBUG', False),
@@ -51,6 +52,7 @@ def debug_static(request):
         response_data = {
             "static_url": static_url,
             "static_root": static_root,
+            "force_script_name": getattr(settings, 'FORCE_SCRIPT_NAME', ''),
             "test_file_path": test_file,
             "test_file_exists": os.path.exists(test_file),
             "static_patterns": str(static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)),
@@ -66,15 +68,25 @@ def debug_static(request):
             "error": str(e)
         }, status=500)
 
-urlpatterns = [
+main_urlpatterns = [
     path('4dm1nxXx/', admin.site.urls),
     path('health/', health_check),
     path('debug-static/', debug_static),
-    path('api/', include('api.urls')),
+    path('/', include('api.urls')),
     path('office/', include('office.urls')),
     path('retailer/', include('retailer.urls')),
     path('wholesales/', include('wholesales.urls')),
 ]
+
+# Check if we need to add subfolder support
+if hasattr(settings, 'FORCE_SCRIPT_NAME') and settings.FORCE_SCRIPT_NAME:
+    # Use the FORCE_SCRIPT_NAME from settings
+    script_name = settings.FORCE_SCRIPT_NAME.strip('/')
+    urlpatterns = [
+        path(f'{script_name}/', include(main_urlpatterns)),
+    ]
+else:
+    urlpatterns = main_urlpatterns
 
 # Serve static and media files in development/WSGI mode
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
