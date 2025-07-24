@@ -37,25 +37,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
-from django.conf import settings
-
-schema_view = get_schema_view(
-    openapi.Info(
-        title="RYO Project API",
-        default_version='v1',
-        description="API documentation for RYO Project",
-        terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="banyu.senjana@limamail.net"),
-        license=openapi.License(name="BSD License"),
-    ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-    url=f"{getattr(settings, 'DOMAIN_NAME', 'https://localhost:9002')}{getattr(settings, 'FORCE_SCRIPT_NAME', '')}/api/",
-)
+import os
 
 router = DefaultRouter()
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
@@ -64,8 +46,6 @@ router.register(r'voucherlimit', VoucherLimitViewSet, basename='voucherlimit')
 
 
 urlpatterns = [
-    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('user/register/', register, name='register'),
     path('user/update/<int:user_id>/', admin_update_user, name='admin-update-user'),
     path('user/delete/<int:user_id>/', admin_delete_user, name='admin-delete-user'),
@@ -104,3 +84,52 @@ urlpatterns = [
     # Include ViewSet routes
     path('', include(router.urls)),
 ]
+
+from django.conf import settings
+
+SUB_PATH = os.getenv('SUB_PATH', '')
+print(f"Using SUB_PATH: {SUB_PATH}")
+
+# ✅ Custom schema view dengan dynamic URL handling
+def get_swagger_base_url():
+    """Get base URL untuk Swagger tanpa double prefix"""
+    force_script_name = getattr(settings, 'FORCE_SCRIPT_NAME', None)
+    
+    if force_script_name:
+        # Untuk Kong environment, base URL sudah include prefix
+        return None  # Let drf-yasg auto-detect
+    else:
+        # Development environment
+        return None
+
+
+# ✅ Add API documentation jika menggunakan drf-yasg
+try:
+    from drf_yasg.views import get_schema_view
+    from drf_yasg import openapi
+    from rest_framework import permissions
+
+    schema_view = get_schema_view(
+        openapi.Info(
+            title="RYO API",
+            default_version='v1',
+            description="RYO Marketing API Documentation",
+        ),
+        public=True,
+        permission_classes=[permissions.AllowAny],
+        url=get_swagger_base_url(),  # Use dynamic base URL
+    )
+    
+    # ✅ Add to urlpatterns
+    docs_urls = [
+        path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+        path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+        path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    ]
+    
+    urlpatterns += docs_urls
+    print("Added API documentation URLs")
+
+except ImportError:
+    schema_view = None
+

@@ -35,6 +35,28 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-prod
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'on')
 
+# ✅ Add FORCE_SCRIPT_NAME untuk sub-path
+SUB_PATH = os.getenv('SUB_PATH', '')
+
+hostname = os.getenv('HOSTNAME', '')
+is_production = os.getenv('ENVIRONMENT', 'development') == 'production'
+is_kong_environment = 'kcsi.id' in hostname or os.getenv('USE_KONG', 'false').lower() == 'true'
+
+if SUB_PATH and is_kong_environment and is_production:
+    # Production dengan Kong Gateway
+    FORCE_SCRIPT_NAME = SUB_PATH
+    print(f"Kong production mode: FORCE_SCRIPT_NAME={FORCE_SCRIPT_NAME}")
+else:
+    # Development server tanpa Kong
+    FORCE_SCRIPT_NAME = None
+    print(f"Development mode: FORCE_SCRIPT_NAME disabled")
+
+print(f"DEBUG: {DEBUG}")
+print(f"SUB_PATH: {SUB_PATH}")
+print(f"is_kong_environment: {is_kong_environment}")
+print(f"is_production: {is_production}")
+print(f"FORCE_SCRIPT_NAME: {FORCE_SCRIPT_NAME}")
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or ['localhost', 
                  '127.0.0.1', 
                  '0.0.0.0',
@@ -87,9 +109,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
-
-# ✅ Add FORCE_SCRIPT_NAME untuk sub-path
-FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME', '/ryo-api')
 
 # AWS ALB Configuration
 USE_X_FORWARDED_HOST = True
@@ -250,7 +269,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = f'{FORCE_SCRIPT_NAME}/staticfiles/' if FORCE_SCRIPT_NAME else '/staticfiles/'
+STATIC_URL = '/staticfiles/'
 
 
 # Additional directories for staticfiles
@@ -268,7 +287,7 @@ STATICFILES_FINDERS = [
 # Media files for local development (when not using S3)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # MEDIA_URL = 'media/'
-MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else f'{FORCE_SCRIPT_NAME}/media/'
+MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

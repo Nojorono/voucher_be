@@ -22,8 +22,9 @@ from django.http import JsonResponse, HttpResponse
 import json
 import os
 
-# ✅ Get sub-path from settings
-SUB_PATH = getattr(settings, 'FORCE_SCRIPT_NAME', '').strip('/')
+# ✅ Get SUB_PATH
+SUB_PATH = os.getenv('SUB_PATH', '').strip('/')
+print(f"Core URLs - SUB_PATH: {SUB_PATH}")
 
 def health_check(request):
     """Health check endpoint"""
@@ -73,19 +74,36 @@ urlpatterns = [
     path('4dm1nxXx/', admin.site.urls),
     path('health/', health_check),
     path('debug-static/', debug_static),
-    path('api/', include('api.urls')),
+    path('', include('api.urls')),
     path('office/', include('office.urls')),
     path('retailer/', include('retailer.urls')),
     path('wholesales/', include('wholesales.urls')),
 ]
 
+# ✅ Add API docs at root level for development
+if settings.DEBUG:
+    from api.urls import schema_view
+    try:
+        urlpatterns += [
+            path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+        ]
+        print("Added docs/ URL pattern for development")
+    except:
+        pass
+    
 # Serve static and media files in development/WSGI mode
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# ✅ Wrap with sub-path jika ada
-if SUB_PATH:
-    from django.urls import path
-    urlpatterns = [
-        path(f'{SUB_PATH}/', include(urlpatterns)),
-    ]
+# ✅ Wrap dengan SUB_PATH jika menggunakan Kong
+if SUB_PATH and not settings.DEBUG:
+    print(f"Wrapping URLs with SUB_PATH: /{SUB_PATH}/")
+    from django.urls import path, include
+    
+    # Wrap all URLs dengan SUB_PATH
+    wrapped_patterns = [path(f'{SUB_PATH}/', include(urlpatterns))]
+    urlpatterns = wrapped_patterns
+
+print("URL patterns configured:")
+for pattern in urlpatterns:
+    print(f"  {pattern}")
