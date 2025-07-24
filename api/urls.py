@@ -41,18 +41,20 @@ from rest_framework_simplejwt.views import (
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.conf import settings
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="RYO Project API",
-      default_version='v1',
-      description="API documentation for RYO Project",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="banyu.senjana@limamail.net"),
-      license=openapi.License(name="BSD License"),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
+    openapi.Info(
+        title="RYO Project API",
+        default_version='v1',
+        description="API documentation for RYO Project",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="banyu.senjana@limamail.net"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    url=f"{getattr(settings, 'DOMAIN_NAME', 'https://localhost:9002')}{getattr(settings, 'FORCE_SCRIPT_NAME', '')}/api/",
 )
 
 router = DefaultRouter()

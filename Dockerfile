@@ -24,6 +24,10 @@ RUN pip install --upgrade pip wheel setuptools && \
 # Copy project
 COPY . /app/
 
+# ✅ Set environment untuk sub-path
+ENV FORCE_SCRIPT_NAME=/ryo-api
+ENV DJANGO_SETTINGS_MODULE=core.settings
+
 # Copy startup script
 # COPY start.sh /app/start.sh
 RUN dos2unix /app/start.sh && chmod +x /app/start.sh

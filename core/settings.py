@@ -88,8 +88,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
+# ✅ Add FORCE_SCRIPT_NAME untuk sub-path
+FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME', '/ryo-api')
+
 # AWS ALB Configuration
-# FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -99,11 +101,15 @@ CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
     "http://localhost:5174",
     "http://localhost:8000",
     "http://localhost:3000",
+    "http://localhost:9002",
     "http://127.0.0.1:5174",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:3000",
+    "http://127.0.0.1:9002",
+
     "http://api.kcsi.id",
-    "http://localhost:8000",
+    "https://api.kcsi.id",
+    
     # Localhost domains
     "http://ryo.localhost",        # ✅ ADD: Frontend localhost domain
     "http://apiryo.localhost",     # ✅ ADD: Backend localhost domain
@@ -113,14 +119,6 @@ CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
     "https://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://apiryo.kcsi.id",
-    
-    # ALB domains - Add semua kemungkinan
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
@@ -131,14 +129,13 @@ CORS_PREFLIGHT_MAX_AGE = 86400
 # CSRF settings for cross-domain
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') or [
     "http://api.kcsi.id",           # ✅ ADD: API Gateway HTTP
+    "https://api.kcsi.id",          # ✅ ADD: API Gateway HTTPS
     "http://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://ryo.kcsi.id",
     "https://apiryo.kcsi.id",
     "http://ryo.localhost",
     "http://apiryo.localhost",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",  # ← Add ALB
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com", # ← Add ALB HTTPS
 ]
 
 AUTH_USER_MODEL = 'office.User'
@@ -244,13 +241,17 @@ SECURE_PROXY_SSL_HEADER = None
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 
+# ✅ Update CSRF settings untuk sub-path
+CSRF_COOKIE_PATH = FORCE_SCRIPT_NAME or '/'
+
 # Admin security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/staticfiles/'
+STATIC_URL = f'{FORCE_SCRIPT_NAME}/staticfiles/' if FORCE_SCRIPT_NAME else '/staticfiles/'
+
 
 # Additional directories for staticfiles
 STATICFILES_DIRS = [
@@ -267,7 +268,7 @@ STATICFILES_FINDERS = [
 # Media files for local development (when not using S3)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # MEDIA_URL = 'media/'
-MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else '/media/'
+MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/' if AWS_STORAGE_BUCKET_NAME else f'{FORCE_SCRIPT_NAME}/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
