@@ -119,13 +119,9 @@ USE_X_FORWARDED_PORT = True
 CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
     "http://localhost:5174",
-    "http://localhost:8000",
+    "http://localhost:8080",
     "http://localhost:3000",
     "http://localhost:9002",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:9002",
 
     "http://api.kcsi.id",
     "https://api.kcsi.id",
@@ -222,7 +218,7 @@ TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 # AWS S3 Configuration - Fixed for ACL issue
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -248,31 +244,26 @@ AWS_QUERYSTRING_AUTH = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-    
-SECURE_SSL_REDIRECT = True  # Set True jika menggunakan HTTPS
-SESSION_COOKIE_SECURE = True  # Set True jika menggunakan HTTPS
-CSRF_COOKIE_SECURE = True     # Set True jika menggunakan HTTPS
-
-# Security settings (HTTP mode)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
-
-# ✅ Update CSRF settings untuk sub-path
-CSRF_COOKIE_PATH = FORCE_SCRIPT_NAME or '/'
-
-# ✅ Cookie security untuk HTTPS
+# HTTPS Configuration
 if not DEBUG:
+    # ✅ Force HTTPS untuk production
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    
+    # ✅ HSTS Settings
     SECURE_HSTS_SECONDS = 86400
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    
+    # ✅ Cookie security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/staticfiles/'
-
 
 # Additional directories for staticfiles
 STATICFILES_DIRS = [

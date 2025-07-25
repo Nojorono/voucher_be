@@ -41,52 +41,83 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
+# ✅ Single schema_view definition
+try:
+    from rest_framework import permissions
+    from drf_yasg.views import get_schema_view
+    from drf_yasg import openapi
 
-# ✅ Dynamic URL generation untuk HTTPS
-def get_api_url():
-    """Generate API URL berdasarkan environment"""
-    if settings.DEBUG:
-        return "http://localhost:8080"
-    else:
-        # Production dengan HTTPS
-        hostname = os.getenv('HOSTNAME', 'https://api.kcsi.id')
-        sub_path = os.getenv('SUB_PATH', '/ryo-api')
-        return f"{hostname}{sub_path}"
+    # ✅ Dynamic URL generation untuk HTTPS
+    def get_api_url():
+        """Generate API URL berdasarkan environment"""
+        if settings.DEBUG:
+            return None  # Let Swagger auto-detect for development
+        else:
+            # Production dengan HTTPS
+            return "https://api.kcsi.id/ryo-api"
 
-schema_view = get_schema_view(
-    openapi.Info(
-        title="RYO Project API",
-        default_version='v1',
-        description="API documentation for RYO Project",
-        terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="banyu.senjana@limamail.net"),
-        license=openapi.License(name="BSD License"),
-    ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-    # ✅ Set URL untuk HTTPS
-    url=get_api_url(),
-    # ✅ Force HTTPS untuk production
-    schemes=['https', 'http'] if settings.DEBUG else ['https'],
-)
+    schema_view = get_schema_view(
+        openapi.Info(
+            title="RYO Project API",
+            default_version='v1',
+            description="""
+            # RYO Marketing Campaign API
+            
+            API documentation for RYO Project - Marketing Campaign Management System
+            
+            ## Features:
+            - 🔐 JWT Authentication
+            - 👥 User & Retailer Management  
+            - 🎫 Voucher Management & Verification
+            - 📸 Photo Verification System
+            - 📊 Reporting & Analytics
+            - 🗺️ Geographic Data Management
+            
+            ## Authentication:
+            Most endpoints require JWT authentication. Include token in header:
+            ```
+            Authorization: Bearer <your-jwt-token>
+            ```
+            
+            ## Base URLs:
+            - **Development**: http://localhost:8080
+            - **Production**: https://api.kcsi.id/ryo-api
+            """,
+            terms_of_service="https://www.kcsi.id/terms/",
+            contact=openapi.Contact(
+                name="RYO API Support",
+                email="banyu.senjana@limamail.net"
+            ),
+            license=openapi.License(name="MIT License"),
+        ),
+        public=True,
+        permission_classes=(permissions.AllowAny,),
+        url=get_api_url(),
+        # ✅ Remove 'schemes' parameter - not supported
+    )
+    
+    SWAGGER_AVAILABLE = True
+    print("✅ drf-yasg configured successfully")
+    
+except ImportError:
+    schema_view = None
+    SWAGGER_AVAILABLE = False
+    print("⚠️ drf-yasg not available, skipping API docs")
 
+# Router setup
 router = DefaultRouter()
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
 router.register(r'retailers', RetailerViewSet, basename='retailer')
 router.register(r'voucherlimit', VoucherLimitViewSet, basename='voucherlimit')
 
-
 urlpatterns = [
-    # Authentication endpoints - langsung di root level
+    # Authentication endpoints
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
     path('logout/', logout, name='logout'),
     
-    # password management
+    # Password management
     path('reset_password/', reset_password, name='reset_password'),
     path('change_password/', change_password, name='change_password'),
 
@@ -94,10 +125,10 @@ urlpatterns = [
     path('user/register/', register, name='register'),
     path('user/update/<int:user_id>/', admin_update_user, name='admin-update-user'),
     path('user/delete/<int:user_id>/', admin_delete_user, name='admin-delete-user'),
-    path('user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),  # Custom route
-    path('user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),  # Custom route
-    path('user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),  # Custom route
-    path('user/', UserViewSet.as_view({'get': 'list_users'}), name='user-list'),  # Custom route
+    path('user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),
+    path('user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),
+    path('user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),
+    path('user/', UserViewSet.as_view({'get': 'list_users'}), name='user-list'),
 
     # Retailer, Wholesale, Voucher management
     path('list_photos/', list_photos, name='list_photos'),
@@ -110,7 +141,7 @@ urlpatterns = [
     path('report/list_retailers/', list_retailers, name='list_retailers'),
     path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
    
-    # location and kodepos management
+    # Location and kodepos management
     path('kodepos/', kodepos_list, name='kodepos-list'),
     path('kelurahan/', kelurahan_list, name='kelurahan-list'),
     path('kecamatan/', kecamatan_list, name='kecamatan-list'),
@@ -129,23 +160,8 @@ urlpatterns = [
     path('', include(router.urls)),
 ]
 
-# ✅ Add API documentation
-try:
-    from drf_yasg.views import get_schema_view
-    from drf_yasg import openapi
-    from rest_framework import permissions
-
-    schema_view = get_schema_view(
-        openapi.Info(
-            title="RYO API",
-            default_version='v1',
-            description="RYO Marketing API Documentation",
-        ),
-        public=True,
-        permission_classes=[permissions.AllowAny],
-    )
-    
-    # Add docs URLs
+# ✅ Add API documentation URLs
+if SWAGGER_AVAILABLE:
     docs_urls = [
         path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
         path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
@@ -155,8 +171,4 @@ try:
     urlpatterns += docs_urls
     print("✅ Added API documentation URLs")
 
-except ImportError:
-    schema_view = None
-    print("⚠️ drf-yasg not available, skipping API docs")
-
-print(f"API URL patterns configured ({len(urlpatterns)} patterns)")
+print(f"✅ API URL patterns configured ({len(urlpatterns)} total patterns)")
