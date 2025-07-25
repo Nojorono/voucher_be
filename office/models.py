@@ -107,6 +107,34 @@ class VoucherLimit(models.Model):
     limit = models.IntegerField(default=0)
     current_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    voucher_project = models.ForeignKey('VoucherProject', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"Voucher Limit: {self.limit}, Current Count: {self.current_count}"
+
+class VoucherProject(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    periode_start = models.DateTimeField(null=True, blank=True)
+    periode_end = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, help_text="Status aktif atau tidaknya voucher project")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=50, null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+        
+class VoucherRetailerDiscount(models.Model):
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    agen_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    voucher_project = models.ForeignKey(VoucherProject, on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.CharField(max_length=50, null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return f"Discount {self.discount_amount} or {self.discount_percentage}% for {self.voucher_project.name if self.voucher_project else 'No Project'}"

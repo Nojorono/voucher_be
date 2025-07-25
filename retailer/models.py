@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.db import models
 
-
 # Create your models here.
 class Retailer(models.Model):
     name = models.CharField(max_length=255)
@@ -28,6 +27,7 @@ class Voucher(models.Model):
     redeemed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expired_at = models.DateTimeField(null=True, blank=True)
+    project = models.ForeignKey('office.VoucherProject', on_delete=models.CASCADE, null=True, blank=True)
     
     def __str__(self):
         return self.code

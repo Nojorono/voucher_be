@@ -31,7 +31,9 @@ from .views import (
     list_reimburse,
     list_retailers,
     get_current_count, 
-    VoucherLimitViewSet, 
+    VoucherLimitViewSet,
+    VoucherProjectViewSet,
+    VoucherRetailerDiscountViewSet,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -59,6 +61,8 @@ router = DefaultRouter()
 router.register(r'wholesales', WholesaleViewSet, basename='wholesale')
 router.register(r'retailers', RetailerViewSet, basename='retailer')
 router.register(r'voucherlimit', VoucherLimitViewSet, basename='voucherlimit')
+router.register(r'voucher-projects', VoucherProjectViewSet, basename='voucher-project')
+router.register(r'voucher-discounts', VoucherRetailerDiscountViewSet, basename='voucher-discount')
 
 
 urlpatterns = [

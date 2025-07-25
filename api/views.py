@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus, VoucherLimit
+from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus, VoucherLimit, VoucherProject, VoucherRetailerDiscount
 from retailer.models import Retailer, RetailerPhoto, Voucher
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from django.shortcuts import get_object_or_404
@@ -16,11 +16,12 @@ from .serializers import (
     RetailerSerializer, RetailerPhotoVerificationSerializer, RetailerPhotoRejectionSerializer,
     VoucherSerializer, KodeposSerializer, ItemSerializer, WholesaleTransactionSerializer,
     ReimburseSerializer, RetailerReportSerializer, WholesaleTransactionDetailSerializer,
-    VoucherLimitSerializer
+    VoucherLimitSerializer, VoucherProjectSerializer, VoucherRetailerDiscountSerializer,
+    VoucherProjectSummarySerializer, VoucherLimitUpdateSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.db.models import Count
+from django.db.models import Count, Avg, Sum
 from datetime import datetime
 import pandas as pd
 from django.conf import settings
@@ -28,6 +29,7 @@ from django.core.mail import send_mail
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.db import models
 
 # Custom Token Obtain Pair View
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -155,11 +157,15 @@ class RetailerViewSet(viewsets.ModelViewSet):
         retailer = self.get_object()
         photos = RetailerPhoto.objects.filter(retailer=retailer)
         voucher = Voucher.objects.filter(retailer=retailer).first()
+        project_id = voucher.project.id if voucher.project else None
         if not photos.exists():
             return Response({"message": "No photos found for this retailer."}, status=http_status.HTTP_404_NOT_FOUND)
 
-        # Update current_count in VoucherLimit with id 1
-        voucher_limit = VoucherLimit.objects.filter(id=1).first()
+        # Update current_count in VoucherLimit with project_id
+        voucher_limit = VoucherLimit.objects.filter(voucher_project=project_id).first()
+        if not voucher_limit:
+            return Response({"message": "Voucher limit not found for this project."}, status=http_status.HTTP_404_NOT_FOUND)
+
         if voucher_limit.current_count >= voucher_limit.limit:
             return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
         
@@ -576,20 +582,253 @@ def list_reimburse(request):
 # @permission_classes([IsAuthenticated])
 def get_current_count(request):
     voucher_limit_id = request.query_params.get('id')
+    project_id = request.query_params.get('project_id')
+
+    filters = {}
     if voucher_limit_id:
-        voucher_limit = get_object_or_404(VoucherLimit, id=voucher_limit_id)
-    else:
-        voucher_limit = VoucherLimit.objects.first()
-    
+        filters['id'] = voucher_limit_id
+    if project_id:
+        filters['voucher_project_id'] = project_id
+
+    voucher_limit = VoucherLimit.objects.filter(**filters).first()
+
     if not voucher_limit:
         return Response({"error": "Voucher limit not set"}, status=http_status.HTTP_404_NOT_FOUND)
-    
+
     if voucher_limit.current_count >= voucher_limit.limit:
         return Response({"message": "Voucher limit reached"}, status=http_status.HTTP_200_OK)
-    
-    return Response({"current_count": voucher_limit.current_count, "limit": voucher_limit.limit}, status=http_status.HTTP_200_OK)
+
+    return Response({
+        "current_count": voucher_limit.current_count,
+        "limit": voucher_limit.limit,
+        "project_id": voucher_limit.voucher_project_id if voucher_limit.voucher_project_id else None
+    }, status=http_status.HTTP_200_OK)
 
 class VoucherLimitViewSet(viewsets.ModelViewSet):
-    queryset = VoucherLimit.objects.all()
+    queryset = VoucherLimit.objects.select_related('voucher_project').all()
     serializer_class = VoucherLimitSerializer
+    permission_classes = [IsAuthenticated]
+    
+    @action(detail=True, methods=['post'])
+    def increment(self, request, pk=None):
+        """Increment current count for voucher limit"""
+        voucher_limit = self.get_object()
+        serializer = VoucherLimitUpdateSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            increment = serializer.validated_data['increment']
+            new_count = voucher_limit.current_count + increment
+            
+            # Check if increment would exceed limit
+            if new_count > voucher_limit.limit:
+                return Response({
+                    'error': f'Cannot increment by {increment}. Would exceed limit of {voucher_limit.limit}',
+                    'current_count': voucher_limit.current_count,
+                    'limit': voucher_limit.limit,
+                    'remaining': voucher_limit.limit - voucher_limit.current_count
+                }, status=http_status.HTTP_400_BAD_REQUEST)
+            
+            voucher_limit.current_count = new_count
+            voucher_limit.save()
+            
+            return Response({
+                'message': f'Voucher count incremented by {increment}',
+                'current_count': voucher_limit.current_count,
+                'limit': voucher_limit.limit,
+                'remaining': voucher_limit.limit - voucher_limit.current_count
+            }, status=http_status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get summary of all voucher limits"""
+        limits = self.get_queryset()
+        total_allocated = sum(limit.limit for limit in limits)
+        total_used = sum(limit.current_count for limit in limits)
+        total_remaining = total_allocated - total_used
+        
+        return Response({
+            'total_limits': limits.count(),
+            'total_allocated': total_allocated,
+            'total_used': total_used,
+            'total_remaining': total_remaining,
+            'usage_percentage': (total_used / total_allocated * 100) if total_allocated > 0 else 0
+        }, status=http_status.HTTP_200_OK)
+
+
+class VoucherProjectViewSet(viewsets.ModelViewSet):
+    queryset = VoucherProject.objects.prefetch_related('voucherlimit_set').all()
+    serializer_class = VoucherProjectSerializer
+    # permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by active status
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            is_active_bool = is_active.lower() in ['true', '1', 'yes']
+            queryset = queryset.filter(is_active=is_active_bool)
+        
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if start_date:
+            queryset = queryset.filter(periode_start__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(periode_end__lte=end_date)
+            
+        return queryset.order_by('-created_at')
+    
+    @action(detail=False, methods=['get'])
+    def active(self, request):
+        """Get only active voucher projects"""
+        active_projects = self.get_queryset().filter(is_active=True)
+        serializer = self.get_serializer(active_projects, many=True)
+        return Response({
+            'count': len(serializer.data),
+            'results': serializer.data
+        }, status=http_status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def toggle_status(self, request, pk=None):
+        """Toggle active status of voucher project"""
+        project = self.get_object()
+        project.is_active = not project.is_active
+        project.updated_by = request.user.username if hasattr(request, 'user') else None
+        project.updated_at = datetime.now()
+        project.save()
+        
+        return Response({
+            'message': f'Project status changed to {"active" if project.is_active else "inactive"}',
+            'is_active': project.is_active
+        }, status=http_status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'])
+    def dashboard(self, request):
+        """Get dashboard summary for voucher projects"""
+        projects = self.get_queryset()
+        active_projects = projects.filter(is_active=True)
+        
+        # Calculate totals
+        total_allocated = 0
+        total_used = 0
+        
+        for project in projects:
+            for limit in project.voucherlimit_set.all():
+                total_allocated += limit.limit
+                total_used += limit.current_count
+        
+        summary_data = {
+            'total_projects': projects.count(),
+            'active_projects': active_projects.count(),
+            'inactive_projects': projects.count() - active_projects.count(),
+            'total_allocated_vouchers': total_allocated,
+            'total_used_vouchers': total_used,
+            'total_remaining_vouchers': total_allocated - total_used,
+            'usage_percentage': (total_used / total_allocated * 100) if total_allocated > 0 else 0
+        }
+        
+        serializer = VoucherProjectSummarySerializer(summary_data)
+        return Response(serializer.data, status=http_status.HTTP_200_OK)
+
+
+class VoucherRetailerDiscountViewSet(viewsets.ModelViewSet):
+    queryset = VoucherRetailerDiscount.objects.select_related('voucher_project').all()
+    serializer_class = VoucherRetailerDiscountSerializer
+    # permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by voucher project
+        project_id = self.request.query_params.get('project_id')
+        if project_id:
+            queryset = queryset.filter(voucher_project_id=project_id)
+        
+        # Filter by discount range
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+        
+        if min_amount:
+            queryset = queryset.filter(discount_amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(discount_amount__lte=max_amount)
+            
+        return queryset.order_by('-created_at')
+    
+    @action(detail=False, methods=['get'])
+    def by_project(self, request):
+        """Get discounts grouped by voucher project"""
+        project_id = request.query_params.get('project_id')
+        if not project_id:
+            return Response({'error': 'project_id parameter required'}, status=http_status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            project = VoucherProject.objects.get(id=project_id)
+            discounts = self.get_queryset().filter(voucher_project=project)
+            serializer = self.get_serializer(discounts, many=True)
+            
+            return Response({
+                'project': {
+                    'id': project.id,
+                    'name': project.name,
+                    'is_active': project.is_active
+                },
+                'discounts': serializer.data,
+                'count': len(serializer.data)
+            }, status=http_status.HTTP_200_OK)
+            
+        except VoucherProject.DoesNotExist:
+            return Response({'error': 'Voucher project not found'}, status=http_status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=False, methods=['get'])
+    def by_voucher(self, request):
+        """Get discounts grouped by voucher"""
+        voucher_code = request.query_params.get('voucher_code')
+        if not voucher_code:
+            return Response({'error': 'voucher_code parameter required'}, status=http_status.HTTP_400_BAD_REQUEST)
+
+        try:
+            voucher = Voucher.objects.get(code=voucher_code)
+            project = VoucherProject.objects.get(id=voucher.project_id)
+            # project = voucher.project_id
+            print(project)
+            discounts = self.get_queryset().filter(voucher_project=project)
+            serializer = self.get_serializer(discounts, many=True)
+            
+            return Response({
+                'project': {
+                    'id': project.id,
+                    'name': project.name,
+                    'is_active': project.is_active
+                },
+                'discounts': serializer.data,
+                'count': len(serializer.data)
+            }, status=http_status.HTTP_200_OK)
+            
+        except VoucherProject.DoesNotExist:
+            return Response({'error': 'Voucher project not found'}, status=http_status.HTTP_404_NOT_FOUND)
+
+    
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get summary of all voucher discounts"""
+        discounts = self.get_queryset()
+        
+        total_discounts = discounts.count()
+        avg_discount_amount = discounts.aggregate(
+            avg_amount=models.Avg('discount_amount'),
+            avg_percentage=models.Avg('discount_percentage'),
+            total_agen_fee=models.Sum('agen_fee')
+        )
+        
+        return Response({
+            'total_discounts': total_discounts,
+            'average_discount_amount': avg_discount_amount['avg_amount'] or 0,
+            'average_discount_percentage': avg_discount_amount['avg_percentage'] or 0,
+            'total_agen_fee': avg_discount_amount['total_agen_fee'] or 0
+        }, status=http_status.HTTP_200_OK)
     permission_classes = [IsAuthenticated]

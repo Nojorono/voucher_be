@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus, VoucherLimit
+from office.models import User, Kodepos, Item, Reimburse, ReimburseStatus, VoucherLimit, VoucherProject, VoucherRetailerDiscount
 from wholesales.models import Wholesale, VoucherRedeem, WholesaleTransaction, WholesaleTransactionDetail
 from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
@@ -258,6 +258,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
     kecamatan = serializers.CharField(required=True)
     kelurahan = serializers.CharField(required=False)
     expired_at = serializers.DateTimeField(required=False)
+    project_id = serializers.IntegerField(required=False)
     photos = serializers.ListField(
         child=serializers.ImageField(),
         write_only=True,
@@ -317,8 +318,11 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         photos = validated_data.pop('photos', [])
         photo_remarks = validated_data.pop('photo_remarks', [])
         wholesale = validated_data.pop('wholesale')
-        expired_at = validated_data.pop('expired_at', datetime(2025, 7, 31, 23, 59, 59))
-
+        # Ambil expired_at dari validated_data, jika tidak ada gunakan periode_end dari VoucherProject
+        project_id = validated_data.get('project_id')
+        voucher_project = VoucherProject.objects.filter(id=project_id).first()
+        expired_at = voucher_project.periode_end if voucher_project and voucher_project.periode_end else None
+        
         retailer = Retailer.objects.create(
             name=validated_data["name"],
             phone_number=validated_data["phone_number"],
@@ -340,7 +344,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
         logger.info(f"Uploaded {len(photos)} photos for retailer {retailer.name}")
 
         voucher_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-        Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at)
+        Voucher.objects.create(code=voucher_code, retailer=retailer, expired_at=expired_at, project_id=project_id)
 
         logger.info(f"Voucher {voucher_code} generated for retailer {retailer.name}")
 
@@ -584,6 +588,96 @@ class WholesaleTransactionDetailSerializer(serializers.ModelSerializer):
 
 
 class VoucherLimitSerializer(serializers.ModelSerializer):
+    voucher_project_name = serializers.CharField(source='voucher_project.name', read_only=True)
+    remaining = serializers.SerializerMethodField()
+    percentage_used = serializers.SerializerMethodField()
+    
     class Meta:
         model = VoucherLimit
-        fields = ['id', 'description', 'limit', 'current_count']
+        fields = ['id', 'description', 'limit', 'current_count', 'remaining', 'percentage_used', 
+                 'voucher_project', 'voucher_project_name', 'created_at']
+    
+    def get_remaining(self, obj):
+        return obj.limit - obj.current_count
+    
+    def get_percentage_used(self, obj):
+        if obj.limit > 0:
+            return round((obj.current_count / obj.limit) * 100, 2)
+        return 0
+
+
+class VoucherProjectSerializer(serializers.ModelSerializer):
+    voucher_limits = VoucherLimitSerializer(many=True, read_only=True, source='voucherlimit_set')
+    total_allocated = serializers.SerializerMethodField()
+    total_used = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VoucherProject
+        fields = ['id', 'name', 'description', 'periode_start', 'periode_end', 'is_active',
+                 'created_at', 'created_by', 'updated_at', 'updated_by', 'voucher_limits',
+                 'total_allocated', 'total_used']
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_total_allocated(self, obj):
+        return sum(limit.limit for limit in obj.voucherlimit_set.all())
+    
+    def get_total_used(self, obj):
+        return sum(limit.current_count for limit in obj.voucherlimit_set.all())
+    
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user.username if self.context.get('request') else None
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        validated_data['updated_by'] = self.context['request'].user.username if self.context.get('request') else None
+        validated_data['updated_at'] = datetime.now()
+        return super().update(instance, validated_data)
+
+
+class VoucherRetailerDiscountSerializer(serializers.ModelSerializer):
+    voucher_project_name = serializers.CharField(source='voucher_project.name', read_only=True)
+    total_discount = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VoucherRetailerDiscount
+        fields = ['id', 'discount_amount', 'discount_percentage', 'agen_fee', 'total_discount',
+                 'voucher_project', 'voucher_project_name', 'created_at', 'created_by',
+                 'updated_at', 'updated_by']
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_total_discount(self, obj):
+        """Calculate total discount (amount + percentage equivalent)"""
+        return {
+            'discount_amount': float(obj.discount_amount),
+            'discount_percentage': float(obj.discount_percentage),
+            'agen_fee': float(obj.agen_fee) if obj.agen_fee else 0,
+        }
+    
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user.username if self.context.get('request') else None
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        validated_data['updated_by'] = self.context['request'].user.username if self.context.get('request') else None
+        validated_data['updated_at'] = datetime.now()
+        return super().update(instance, validated_data)
+
+
+# Serializer untuk summary/dashboard
+class VoucherProjectSummarySerializer(serializers.Serializer):
+    total_projects = serializers.IntegerField()
+    active_projects = serializers.IntegerField()
+    inactive_projects = serializers.IntegerField()
+    total_allocated_vouchers = serializers.IntegerField()
+    total_used_vouchers = serializers.IntegerField()
+    total_remaining_vouchers = serializers.IntegerField()
+    usage_percentage = serializers.FloatField()
+    
+    
+class VoucherLimitUpdateSerializer(serializers.Serializer):
+    increment = serializers.IntegerField(default=1, min_value=1)
+    
+    def validate_increment(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Increment must be at least 1")
+        return value

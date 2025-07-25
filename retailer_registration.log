@@ -63,3 +63,44 @@
 2025-07-18 14:19:43,766 - INFO - Uploaded 1 photos for retailer asdasdagasd
 2025-07-18 14:19:43,776 - INFO - Voucher NKYM51T6OQ generated for retailer asdasdagasd
 2025-07-18 14:19:46,732 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 15:38:22,515 - INFO - Validating retailer data: {'ws_name': 'Sahabat Tembakau', 'name': 'Toko Retail test 62', 'phone_number': '08113344762', 'address': 'jalan', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA SELATAN', 'kecamatan': 'JAGAKARSA', 'kelurahan': 'CIPEDAK', 'project_id': 3, 'photos': [<InMemoryUploadedFile: Screenshot 2025-04-28 080649.png (image/png)>], 'photo_remarks': ['Foto Display']}
+2025-07-25 15:38:22,566 - ERROR - Wholesale 'Sahabat Tembakau' not found.
+2025-07-25 15:38:49,568 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'Toko Retail test 62', 'phone_number': '08113344762', 'address': 'jalan', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA SELATAN', 'kecamatan': 'JAGAKARSA', 'kelurahan': 'CIPEDAK', 'project_id': 3, 'photos': [<InMemoryUploadedFile: Screenshot 2025-04-28 080649.png (image/png)>], 'photo_remarks': ['Foto Display']}
+2025-07-25 15:38:49,617 - INFO - Starting retailer registration process...
+2025-07-25 15:38:49,630 - INFO - Retailer Toko Retail test 62 created successfully.
+2025-07-25 15:38:54,908 - INFO - Uploaded 1 photos for retailer Toko Retail test 62
+2025-07-25 15:38:54,917 - INFO - Voucher S50UCFOO1M generated for retailer Toko Retail test 62
+2025-07-25 15:38:54,919 - INFO - Email from: nna.mobile.dev@gmail.com
+2025-07-25 15:38:54,919 - INFO - To emails: ['banyu.senjana@limamail.net']
+2025-07-25 15:38:54,919 - INFO - CC emails: ['dimas.rosadi@limamail.net']
+2025-07-25 15:38:54,920 - INFO - Email thread started successfully
+2025-07-25 15:39:01,651 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 15:39:01,651 - INFO - Email sent successfully!
+2025-07-25 15:39:01,651 - INFO - Email sent to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 15:39:01,652 - INFO - === EMAIL SENDING END ===
+2025-07-25 15:40:22,537 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'Toko Retail test 63', 'phone_number': '08113344763', 'address': 'jalan', 'provinsi': 'DAERAH KHUSUS IBUKOTA JAKARTA', 'kota': 'JAKARTA SELATAN', 'kecamatan': 'JAGAKARSA', 'kelurahan': 'CIPEDAK', 'project_id': 3, 'photos': [<InMemoryUploadedFile: Screenshot 2025-04-28 080649.png (image/png)>], 'photo_remarks': ['Foto Display']}
+2025-07-25 15:40:22,580 - INFO - Starting retailer registration process...
+2025-07-25 15:40:22,598 - INFO - Retailer Toko Retail test 63 created successfully.
+2025-07-25 15:41:05,108 - INFO - Uploaded 1 photos for retailer Toko Retail test 63
+2025-07-25 15:41:05,116 - INFO - Voucher ETEHQ0PJFB generated for retailer Toko Retail test 63
+2025-07-25 15:41:05,118 - INFO - Email from: nna.mobile.dev@gmail.com
+2025-07-25 15:41:05,118 - INFO - To emails: ['banyu.senjana@limamail.net']
+2025-07-25 15:41:05,118 - INFO - CC emails: ['dimas.rosadi@limamail.net']
+2025-07-25 15:41:05,118 - INFO - Email thread started successfully
+2025-07-25 15:41:12,680 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 15:41:12,680 - INFO - Email sent successfully!
+2025-07-25 15:41:12,681 - INFO - Email sent to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 15:41:12,681 - INFO - === EMAIL SENDING END ===
+2025-07-25 16:10:01,335 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'test daftar project', 'phone_number': '0203040506', 'address': 'jlkjl', 'provinsi': 'BENGKULU', 'kota': 'KEPAHIANG', 'kecamatan': 'BERMANI ILIR', 'kelurahan': 'AIR RAMAN', 'project_id': 2, 'photos': [<InMemoryUploadedFile: logo-lakumart.png (image/png)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-25 16:10:01,390 - INFO - Starting retailer registration process...
+2025-07-25 16:10:01,406 - INFO - Retailer test daftar project created successfully.
+2025-07-25 16:10:04,898 - INFO - Uploaded 1 photos for retailer test daftar project
+2025-07-25 16:10:04,908 - INFO - Voucher 1D8YHLCZL2 generated for retailer test daftar project
+2025-07-25 16:10:04,909 - INFO - Email from: nna.mobile.dev@gmail.com
+2025-07-25 16:10:04,910 - INFO - To emails: ['banyu.senjana@limamail.net']
+2025-07-25 16:10:04,910 - INFO - CC emails: ['dimas.rosadi@limamail.net']
+2025-07-25 16:10:04,910 - INFO - Email thread started successfully
+2025-07-25 16:10:09,237 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 16:10:09,238 - INFO - Email sent successfully!
+2025-07-25 16:10:09,238 - INFO - Email sent to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-25 16:10:09,238 - INFO - === EMAIL SENDING END ===
