@@ -46,52 +46,52 @@ router.register(r'voucherlimit', VoucherLimitViewSet, basename='voucherlimit')
 
 urlpatterns = [
     # Authentication endpoints - langsung di root level
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
-    path('api/logout/', logout, name='logout'),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
+    path('logout/', logout, name='logout'),
     
     # password management
-    path('api/reset_password/', reset_password, name='reset_password'),
-    path('api/change_password/', change_password, name='change_password'),
+    path('reset_password/', reset_password, name='reset_password'),
+    path('change_password/', change_password, name='change_password'),
 
     # User management routes
-    path('api/user/register/', register, name='register'),
-    path('api/user/update/<int:user_id>/', admin_update_user, name='admin-update-user'),
-    path('api/user/delete/<int:user_id>/', admin_delete_user, name='admin-delete-user'),
-    path('api/user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),  # Custom route
-    path('api/user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),  # Custom route
-    path('api/user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),  # Custom route
-    path('api/user/', UserViewSet.as_view({'get': 'list_users'}), name='user-list'),  # Custom route
+    path('user/register/', register, name='register'),
+    path('user/update/<int:user_id>/', admin_update_user, name='admin-update-user'),
+    path('user/delete/<int:user_id>/', admin_delete_user, name='admin-delete-user'),
+    path('user/profile/', UserViewSet.as_view({'get': 'profile'}), name='user-profile'),  # Custom route
+    path('user/updprofile/', UserViewSet.as_view({'put': 'update_profile'}), name='user-update-profile'),  # Custom route
+    path('user/delprofile/', UserViewSet.as_view({'delete': 'delete_profile'}), name='user-delete-profile'),  # Custom route
+    path('user/', UserViewSet.as_view({'get': 'list_users'}), name='user-list'),  # Custom route
 
     # Retailer, Wholesale, Voucher management
-    path('api/list_photos/', list_photos, name='list_photos'),
-    path('api/retailer_register_upload/', retailer_register_upload, name='retailer_register_upload'),
-    path('api/list_vouchers/', list_vouchers, name='list_vouchers'),
-    path('api/redeem_voucher/', redeem_voucher, name='redeem_voucher'),
-    path('api/submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
-    path('api/redeem_report/', redeem_report, name='redeem_report'),
-    path('api/office_verification_report/', office_verification_report, name='office_verification_report'),
-    path('api/report/list_retailers/', list_retailers, name='list_retailers'),
-    path('api/report/<str:view_name>/', ReportView.as_view(), name='report-view'),
+    path('list_photos/', list_photos, name='list_photos'),
+    path('retailer_register_upload/', retailer_register_upload, name='retailer_register_upload'),
+    path('list_vouchers/', list_vouchers, name='list_vouchers'),
+    path('redeem_voucher/', redeem_voucher, name='redeem_voucher'),
+    path('submit_redeem_voucher/', submit_trx_voucher, name='submit_trx_voucher'),
+    path('redeem_report/', redeem_report, name='redeem_report'),
+    path('office_verification_report/', office_verification_report, name='office_verification_report'),
+    path('report/list_retailers/', list_retailers, name='list_retailers'),
+    path('report/<str:view_name>/', ReportView.as_view(), name='report-view'),
    
     # location and kodepos management
-    path('api/kodepos/', kodepos_list, name='kodepos-list'),
-    path('api/kelurahan/', kelurahan_list, name='kelurahan-list'),
-    path('api/kecamatan/', kecamatan_list, name='kecamatan-list'),
-    path('api/kota/', kota_list, name='kota-list'),
-    path('api/provinsi/', provinsi_list, name='provinsi-list'),
-    path('api/kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
+    path('kodepos/', kodepos_list, name='kodepos-list'),
+    path('kelurahan/', kelurahan_list, name='kelurahan-list'),
+    path('kecamatan/', kecamatan_list, name='kecamatan-list'),
+    path('kota/', kota_list, name='kota-list'),
+    path('provinsi/', provinsi_list, name='provinsi-list'),
+    path('kodepos/detail/', KodeposDetailView.as_view(), name='kodepos-detail'),
 
     # Item and Reimburse management
-    path('api/items/', list_items, name='list-items'),
-    path('api/submit_reimburse/', submit_reimburse, name='submit_reimburse'),
-    path('api/list_reimburse/', list_reimburse, name='list_reimburse'),
-    path('api/update_reimburse_status/<int:pk>/<str:new_status>/', update_reimburse_status, name='update_reimburse_status'),
-    path('api/current-count/', get_current_count, name='get_current_count'),
+    path('items/', list_items, name='list-items'),
+    path('submit_reimburse/', submit_reimburse, name='submit_reimburse'),
+    path('list_reimburse/', list_reimburse, name='list_reimburse'),
+    path('update_reimburse_status/<int:pk>/<str:new_status>/', update_reimburse_status, name='update_reimburse_status'),
+    path('current-count/', get_current_count, name='get_current_count'),
 
     # Include ViewSet routes
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]
 
 # ✅ Add API documentation

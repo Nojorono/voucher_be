@@ -80,10 +80,11 @@ urlpatterns = [
     path('4dm1nxXx/', admin.site.urls),
     path('health/', health_check),
     path('debug-static/', debug_static),
-    path('', include('api.urls')),
+    path('api/', include('api.urls')),
     path('office/', include('office.urls')),
     path('retailer/', include('retailer.urls')),
     path('wholesales/', include('wholesales.urls')),
+    path('', include('api.urls')),
 ]
 
 # ✅ Add API docs at root level for development
