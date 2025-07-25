@@ -1,5 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from django.conf import settings
+import os
+
 from .views import (
     register, 
     reset_password,
@@ -36,6 +39,38 @@ from .views import (
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
+)
+
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+# ✅ Dynamic URL generation untuk HTTPS
+def get_api_url():
+    """Generate API URL berdasarkan environment"""
+    if settings.DEBUG:
+        return "http://localhost:8080"
+    else:
+        # Production dengan HTTPS
+        hostname = os.getenv('HOSTNAME', 'https://api.kcsi.id')
+        sub_path = os.getenv('SUB_PATH', '/ryo-api')
+        return f"{hostname}{sub_path}"
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="RYO Project API",
+        default_version='v1',
+        description="API documentation for RYO Project",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="banyu.senjana@limamail.net"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    # ✅ Set URL untuk HTTPS
+    url=get_api_url(),
+    # ✅ Force HTTPS untuk production
+    schemes=['https', 'http'] if settings.DEBUG else ['https'],
 )
 
 router = DefaultRouter()
