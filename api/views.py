@@ -30,6 +30,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.db import models
+from django.utils import timezone
 
 # Import untuk Swagger
 try:
@@ -889,6 +890,20 @@ class VoucherRetailerDiscountViewSet(viewsets.ModelViewSet):
             
         return queryset.order_by('-created_at')
     
+    def perform_create(self, serializer):
+        # Set timezone-aware datetime for creation
+        serializer.save(
+            created_at=timezone.now(),
+            created_by=self.request.user.username if self.request.user.is_authenticated else 'system'
+        )
+    
+    def perform_update(self, serializer):
+        # Set timezone-aware datetime for update
+        serializer.save(
+            updated_at=timezone.now(),
+            updated_by=self.request.user.username if self.request.user.is_authenticated else 'system'
+        )
+
     @action(detail=False, methods=['get'])
     def by_project(self, request):
         """Get discounts grouped by voucher project"""
