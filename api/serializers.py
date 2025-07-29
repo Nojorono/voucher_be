@@ -364,9 +364,9 @@ class RetailerRegistrationSerializer(serializers.Serializer):
             
             # ✅ Fix: Use request host instead of sites framework
             request = self.context.get('request')
-            hostname = os.getenv('HOSTNAME')
+            frontend_url = os.getenv('FRONTEND_URL','')
 
-            verification_url = f"{hostname}/verification"
+            verification_url = f"{frontend_url}/verification"
 
             html_content = f"""
                 <html>

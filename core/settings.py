@@ -35,13 +35,38 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-prod
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'on')
 
-ALLOWED_HOSTS = ['localhost', 
+SUB_PATH = os.getenv('SUB_PATH', '')
+USE_KONG = os.getenv('USE_KONG', 'false').lower() == 'true'
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+
+hostname = os.getenv('HOSTNAME', '')
+is_production = os.getenv('ENVIRONMENT', 'development') == 'production'
+is_kong_environment = 'kcsi.id' in hostname or os.getenv('USE_KONG', 'false').lower() == 'true'
+
+# Set FORCE_SCRIPT_NAME only for reverse URL generation
+if USE_KONG and ENVIRONMENT == 'production' and SUB_PATH:
+    FORCE_SCRIPT_NAME = f'{SUB_PATH}'
+    print(f"Production mode: FORCE_SCRIPT_NAME={FORCE_SCRIPT_NAME}")
+else:
+    FORCE_SCRIPT_NAME = None
+    print("Development mode: FORCE_SCRIPT_NAME disabled")
+
+# Debug output
+print(f"DEBUG: {DEBUG}")
+print(f"SUB_PATH: {SUB_PATH}")
+print(f"USE_KONG: {USE_KONG}")
+print(f"ENVIRONMENT: {ENVIRONMENT}")
+print(f"FORCE_SCRIPT_NAME: {FORCE_SCRIPT_NAME}")
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or ['localhost', 
                  '127.0.0.1', 
                  '0.0.0.0',
                  '10.0.63.158',  # Local network IP for development 
                  'apiryo.localhost',     # ✅ ADD: Backend domain localhost
                  'ryo.localhost',        # ✅ ADD: Frontend domain localhost
                  'apiryo.kcsi.id',  # Backend domain
+		 'backend-ryo',
+                 'api.kcsi.id',
                  'ryo.kcsi.id',     # Allow frontend domain for admin access
                  'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
                  '.amazonaws.com',  # ← Wildcard untuk semua AWS domains
@@ -89,16 +114,17 @@ ROOT_URLCONF = 'core.urls'
 # AWS ALB Configuration
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
     "http://localhost:5174",
-    "http://localhost:8000",
+    "http://localhost:8080",
     "http://localhost:3000",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:3000",
+    "http://localhost:9002",
+
+    "http://api.kcsi.id",
+    "https://api.kcsi.id",
     
     # Localhost domains
     "http://ryo.localhost",        # ✅ ADD: Frontend localhost domain
@@ -109,14 +135,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://apiryo.kcsi.id",
-    
-    # ALB domains - Add semua kemungkinan
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8080",
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com:8082",
 ]
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
@@ -125,15 +143,15 @@ CORS_ALLOW_CREDENTIALS = False  # Jika menggunakan cookies atau session
 CORS_PREFLIGHT_MAX_AGE = 86400
 
 # CSRF settings for cross-domain
-CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') or [
+    "http://api.kcsi.id",           # ✅ ADD: API Gateway HTTP
+    "https://api.kcsi.id",          # ✅ ADD: API Gateway HTTPS
     "http://ryo.kcsi.id",
     "http://apiryo.kcsi.id",
     "https://ryo.kcsi.id",
     "https://apiryo.kcsi.id",
     "http://ryo.localhost",
     "http://apiryo.localhost",
-    "http://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com",  # ← Add ALB
-    "https://kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com", # ← Add ALB HTTPS
 ]
 
 AUTH_USER_MODEL = 'office.User'
@@ -200,7 +218,7 @@ TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 # AWS S3 Configuration - Fixed for ACL issue
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -226,20 +244,23 @@ AWS_QUERYSTRING_AUTH = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+# HTTPS Configuration
+if not DEBUG:
+    # ✅ Force HTTPS untuk production
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
     
-SECURE_SSL_REDIRECT = False  # Set True jika menggunakan HTTPS
-SESSION_COOKIE_SECURE = False  # Set True jika menggunakan HTTPS
-CSRF_COOKIE_SECURE = False     # Set True jika menggunakan HTTPS
-
-# Security settings (HTTP mode)
-SECURE_PROXY_SSL_HEADER = None
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
-
-# Admin security
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+    # ✅ HSTS Settings
+    SECURE_HSTS_SECONDS = 86400
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # ✅ Cookie security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/staticfiles/'
