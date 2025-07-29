@@ -31,9 +31,88 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.db import models
 
-# Custom Token Obtain Pair View
+# Import untuk Swagger
+try:
+    from drf_yasg.utils import swagger_auto_schema
+    from drf_yasg import openapi
+    SWAGGER_AVAILABLE = True
+except ImportError:
+    SWAGGER_AVAILABLE = False
+    def swagger_auto_schema(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+
+# Custom Token Obtain Pair View dengan Swagger documentation
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    
+    if SWAGGER_AVAILABLE:
+        @swagger_auto_schema(
+            operation_description="""
+            Login endpoint untuk mendapatkan JWT access dan refresh tokens.
+            
+            Token akan otomatis tersimpan di Swagger untuk digunakan pada endpoint lain.
+            Setelah login sukses, klik tombol "Authorize" dan masukkan: Bearer <access_token>
+            """,
+            operation_summary="User Login",
+            request_body=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                required=['username', 'password'],
+                properties={
+                    'username': openapi.Schema(
+                        type=openapi.TYPE_STRING, 
+                        example='admin',
+                        description='Username untuk login'
+                    ),
+                    'password': openapi.Schema(
+                        type=openapi.TYPE_STRING, 
+                        example='Admin123!!',
+                        description='Password untuk login'
+                    ),
+                }
+            ),
+            responses={
+                200: openapi.Response(
+                    description="Login successful - Copy access token untuk authorization",
+                    examples={
+                        "application/json": {
+                            "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM4MjAzNjAwLCJpYXQiOjE3MzgyMDA4MDAsImp0aSI6IjEyMzQ1NjciLCJ1c2VyX2lkIjoxfQ.example",
+                            "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczODgwNTYwMCwiaWF0IjoxNzM4MjAwODAwLCJqdGkiOiI3ODkwMTIzIiwidXNlcl9pZCI6MX0.example",
+                            "message": "Login successful",
+                            "userid": 1,
+                            "username": "admin",
+                            "email": "admin@example.com",
+                            "is_staff": True,
+                            "wholesale": 1,
+                            "name": "PT Wholesale ABC",
+                            "phone_number": "081234567890"
+                        }
+                    }
+                ),
+                401: openapi.Response(
+                    description="Invalid credentials",
+                    examples={
+                        "application/json": {
+                            "detail": "No active account found with the given credentials"
+                        }
+                    }
+                ),
+                400: openapi.Response(
+                    description="Validation error",
+                    examples={
+                        "application/json": {
+                            "username": ["This field is required."],
+                            "password": ["This field is required."]
+                        }
+                    }
+                )
+            },
+            tags=['Authentication'],
+            security=[]  # No authentication required for login
+        )
+        def post(self, request, *args, **kwargs):
+            return super().post(request, *args, **kwargs)
 
 # User ViewSet
 class UserViewSet(viewsets.ViewSet):
@@ -90,6 +169,57 @@ def register(request):
     return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Admin Update User View
+@swagger_auto_schema(
+    method='put',
+    operation_description="Update user data by admin",
+    operation_summary="Admin Update User",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="JWT Bearer Token (required)",
+            type=openapi.TYPE_STRING,
+            format='Bearer <token>',
+            required=True
+        )
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, example='newusername'),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@example.com'),
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, example='John'),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, example='Doe'),
+            'is_staff': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description="User updated successfully",
+            examples={
+                "application/json": {
+                    "id": 1,
+                    "username": "newusername",
+                    "email": "user@example.com",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "is_staff": False
+                }
+            }
+        ),
+        401: openapi.Response(
+            description="Authentication required",
+            examples={
+                "application/json": {
+                    "detail": "Authentication credentials were not provided."
+                }
+            }
+        ),
+        404: openapi.Response(description="User not found")
+    },
+    tags=['User Management'],
+    security=[{'Bearer': []}]
+)
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def admin_update_user(request, user_id):
