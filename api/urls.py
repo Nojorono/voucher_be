@@ -49,47 +49,50 @@ try:
     from drf_yasg.views import get_schema_view
     from drf_yasg import openapi
 
-schema_view = get_schema_view(
-   openapi.Info(
-      title="RYO Project API",
-      default_version='v1',
-      description="""
-      # RYO Marketing Campaign API
-      
-      API documentation for RYO Project - Marketing Campaign Management System
-      
-      ## Authentication
-      
-      This API uses JWT (JSON Web Token) authentication. To access protected endpoints:
-      
-      1. **Get Token**: Use the `/login/` endpoint with your username and password
-      2. **Use Token**: Click the "Authorize" button and enter: `Bearer <your-access-token>`
-      3. **All subsequent requests** will automatically include the JWT token
-      
-      ### Example:
-      ```
-      Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-      ```
-      
-      ## Features:
-      - 🔐 JWT Authentication  
-      - 👥 User & Retailer Management
-      - 🎫 Voucher Management & Verification
-      - 📸 Photo Verification System
-      - 📊 Reporting & Analytics
-      - 🗺️ Geographic Data Management
-      """,
-      terms_of_service="https://www.kcsi.id/terms/",
-      contact=openapi.Contact(
-         name="RYO API Support",
-         email="banyu.senjana@limamail.net"
-      ),
-      license=openapi.License(name="MIT License"),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
-   authentication_classes=[],
-)
+    schema_view = get_schema_view(
+    openapi.Info(
+        title="RYO Project API",
+        default_version='v1',
+        description="""
+        # RYO Marketing Campaign API
+        
+        API documentation for RYO Project - Marketing Campaign Management System
+        
+        ## Authentication
+        
+        This API uses JWT (JSON Web Token) authentication. To access protected endpoints:
+        
+        1. **Get Token**: Use the `/login/` endpoint with your username and password
+        2. **Use Token**: Click the "Authorize" button and enter: `Bearer <your-access-token>`
+        3. **All subsequent requests** will automatically include the JWT token
+        
+        ### Example:
+        ```
+        Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        ```
+        
+        ## Features:
+        - 🔐 JWT Authentication  
+        - 👥 User & Retailer Management
+        - 🎫 Voucher Management & Verification
+        - 📸 Photo Verification System
+        - 📊 Reporting & Analytics
+        - 🗺️ Geographic Data Management
+        """,
+        #   terms_of_service="https://www.kcsi.id/terms/",
+        contact=openapi.Contact(
+            name="RYO API Support",
+            email="banyu.senjana@limamail.net"
+        ),
+        license=openapi.License(name="MIT License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    authentication_classes=[],
+    )
+    SWAGGER_AVAILABLE = True
+except ImportError:
+    SWAGGER_AVAILABLE = False
 
 # Router setup
 router = DefaultRouter()
