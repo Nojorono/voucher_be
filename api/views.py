@@ -306,10 +306,10 @@ class RetailerViewSet(viewsets.ModelViewSet):
             voucher_limit.save()
 
         # Mark all photos as verified
-        photos.update(is_verified=True, is_approved=True, verified_at=datetime.now(), approved_at=datetime.now())
+        photos.update(is_verified=True, is_approved=True, verified_at=timezone.now(), approved_at=timezone.now())
         if voucher:
             voucher.is_approved = True
-            voucher.approved_at = datetime.now()
+            voucher.approved_at = timezone.now()
             voucher.save()
 
 
@@ -324,9 +324,9 @@ class RetailerViewSet(viewsets.ModelViewSet):
             return Response({"message": "No photos found for this retailer."}, status=http_status.HTTP_404_NOT_FOUND)
 
         # Mark all photos as rejected
-        photos.update(is_verified=True, is_approved=False, is_rejected=True, verified_at=datetime.now(), rejected_at=datetime.now())
+        photos.update(is_verified=True, is_approved=False, is_rejected=True, verified_at=timezone.now(), rejected_at=timezone.now())
         voucher.is_rejected = True
-        voucher.rejected_at = datetime.now()
+        voucher.rejected_at = timezone.now()
         voucher.save()
         return Response({"message": "All photos for retailer rejected successfully."}, status=http_status.HTTP_200_OK)
 
@@ -602,7 +602,7 @@ class ReportView(APIView):
         if not queryset or not serializer_class:
             return Response({"error": "Invalid view name"}, status=http_status.HTTP_400_BAD_REQUEST)
 
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
         file_path = os.path.join(settings.MEDIA_ROOT, f'{view_name}-{timestamp}.xlsx')
         self.export_to_excel(queryset, serializer_class, file_path)
         
@@ -658,7 +658,7 @@ def update_reimburse_status(request, pk, new_status):
     # Create new status in ReimburseStatus
     status = ReimburseStatus.objects.create(
         status=new_status,
-        status_at=datetime.now(),
+        status_at=timezone.now(),
         status_by=request.user.username
     )
 
@@ -830,7 +830,7 @@ class VoucherProjectViewSet(viewsets.ModelViewSet):
         project = self.get_object()
         project.is_active = not project.is_active
         project.updated_by = request.user.username if hasattr(request, 'user') else None
-        project.updated_at = datetime.now()
+        project.updated_at = timezone.now()
         project.save()
         
         return Response({
