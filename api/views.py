@@ -465,6 +465,15 @@ def list_photos(request):
         retailer_id = retailer.id
         voucher = Voucher.objects.filter(retailer=retailer).first()
         voucher_code = voucher.code if voucher else None
+        
+        # FIX: Perbaiki logic untuk voucher_status_at
+        voucher_status_at = None
+        if voucher:
+            if voucher.approved_at:
+                voucher_status_at = voucher.approved_at
+            else:
+                voucher_status_at = voucher.created_at
+        
         if retailer_id not in response_data:
             response_data[retailer_id] = {
                 "wholesale_name": retailer.wholesale.name,
@@ -474,7 +483,7 @@ def list_photos(request):
                 "retailer_address": retailer.address,
                 "retailer_voucher_code": voucher_code,
                 "retailer_voucher_status": "PENDING" if not voucher else "RECEIVED",
-                "retailer_voucher_status_at": voucher.created_at if voucher else voucher.approved_at,
+                "retailer_voucher_status_at": voucher_status_at,  # FIX: Gunakan variabel yang sudah diperbaiki
                 "photos": []
             }
         response_data[retailer_id]["photos"].append({
