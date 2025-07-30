@@ -13,6 +13,7 @@ class Wholesale(models.Model):
     is_active = models.BooleanField(default=True, help_text="Status aktif atau tidaknya wholesales")
     city = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    project = models.ForeignKey('office.VoucherProject', on_delete=models.CASCADE, null=True, blank=True)
     
     # Parent-child relationship
     parent = models.ForeignKey(
@@ -27,16 +28,19 @@ class Wholesale(models.Model):
     def __str__(self):
         return self.name
     
-    def get_children(self):
+    def get_children(self, active_only=False):
         """Get all direct children of this wholesale"""
+        if active_only:
+            return self.children.filter(is_active=True)
         return self.children.all()
     
-    def get_all_descendants(self):
+    def get_all_descendants(self, active_only=False):
         """Get all descendants (children, grandchildren, etc.) of this wholesale"""
         descendants = []
-        for child in self.children.all():
+        children = self.get_children(active_only=active_only)
+        for child in children:
             descendants.append(child)
-            descendants.extend(child.get_all_descendants())
+            descendants.extend(child.get_all_descendants(active_only=active_only))
         return descendants
     
     def get_ancestors(self):
@@ -61,8 +65,10 @@ class Wholesale(models.Model):
         """Check if this wholesale is a root (has no parent)"""
         return self.parent is None
     
-    def is_leaf(self):
-        """Check if this wholesale is a leaf (has no children)"""
+    def is_leaf(self, active_only=True):
+        """Check if this wholesale is a leaf (has no active children by default)"""
+        if active_only:
+            return not self.children.filter(is_active=True).exists()
         return not self.children.exists()
 
     class Meta:

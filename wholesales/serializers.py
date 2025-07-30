@@ -4,6 +4,7 @@ from .models import Wholesale, VoucherRedeem
 class WholesaleSerializer(serializers.ModelSerializer):
     """Basic wholesale serializer"""
     parent_name = serializers.CharField(source='parent.name', read_only=True)
+    project_name = serializers.CharField(source='project.name', read_only=True)
     children_count = serializers.SerializerMethodField()
     level = serializers.SerializerMethodField()
     is_root = serializers.SerializerMethodField()
@@ -13,14 +14,14 @@ class WholesaleSerializer(serializers.ModelSerializer):
         model = Wholesale
         fields = [
             'id', 'name', 'phone_number', 'address', 'pic', 'city',
-            'is_active', 'created_at', 'updated_at', 'parent', 'parent_name',
+            'is_active', 'created_at', 'updated_at', 'parent', 'parent_name', 'project', 'project_name',
             'children_count', 'level', 'is_root', 'is_leaf'
         ]
         ref_name = 'WholesaleHierarchy'
         
     def get_children_count(self, obj):
-        """Get count of direct children"""
-        return obj.get_children().count()
+        """Get count of direct children that are active"""
+        return obj.get_children(active_only=True).count()
         
     def get_level(self, obj):
         """Get hierarchy level"""
@@ -31,8 +32,8 @@ class WholesaleSerializer(serializers.ModelSerializer):
         return obj.is_root()
         
     def get_is_leaf(self, obj):
-        """Check if is leaf"""
-        return obj.is_leaf()
+        """Check if is leaf (has no active children)"""
+        return obj.is_leaf(active_only=True)
 
 class WholesaleTreeSerializer(serializers.ModelSerializer):
     """Serializer for wholesale with full hierarchy tree"""
@@ -44,14 +45,14 @@ class WholesaleTreeSerializer(serializers.ModelSerializer):
         model = Wholesale
         fields = [
             'id', 'name', 'phone_number', 'address', 'pic', 'city',
-            'is_active', 'created_at', 'updated_at', 'parent',
+            'is_active', 'created_at', 'updated_at', 'parent', 'project',
             'children', 'ancestors', 'level'
         ]
         ref_name = 'WholesaleTree'
         
     def get_children(self, obj):
-        """Get all direct children"""
-        children = obj.get_children()
+        """Get all direct active children"""
+        children = obj.get_children(active_only=True)
         return WholesaleTreeSerializer(children, many=True, context=self.context).data
         
     def get_ancestors(self, obj):
@@ -76,7 +77,7 @@ class WholesaleHierarchySerializer(serializers.ModelSerializer):
         model = Wholesale
         fields = [
             'id', 'name', 'phone_number', 'address', 'pic', 'city',
-            'is_active', 'created_at', 'updated_at', 'parent',
+            'is_active', 'created_at', 'updated_at', 'parent', 'project',
             'children', 'all_descendants', 'ancestors', 'level',
             'is_root', 'is_leaf'
         ]
@@ -84,11 +85,11 @@ class WholesaleHierarchySerializer(serializers.ModelSerializer):
         
     def get_children(self, obj):
         """Get direct children"""
-        return WholesaleSerializer(obj.get_children(), many=True, context=self.context).data
+        return WholesaleSerializer(obj.get_children(active_only=True), many=True, context=self.context).data
         
     def get_all_descendants(self, obj):
         """Get all descendants"""
-        return WholesaleSerializer(obj.get_all_descendants(), many=True, context=self.context).data
+        return WholesaleSerializer(obj.get_all_descendants(active_only=True), many=True, context=self.context).data
         
     def get_ancestors(self, obj):
         """Get all ancestors"""
@@ -103,8 +104,8 @@ class WholesaleHierarchySerializer(serializers.ModelSerializer):
         return obj.is_root()
         
     def get_is_leaf(self, obj):
-        """Check if is leaf"""
-        return obj.is_leaf()
+        """Check if is leaf (has no active children)"""
+        return obj.is_leaf(active_only=True)
 
 class VoucherRedeemSerializer(serializers.ModelSerializer):
     """Voucher redeem serializer with wholesale hierarchy info"""

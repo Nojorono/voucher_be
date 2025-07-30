@@ -6,6 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 import random, string, threading, logging
 from datetime import datetime
+from django.utils import timezone
 from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -88,6 +89,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 # Wholesale Serializer
 class WholesaleSerializer(serializers.ModelSerializer):
     parent_name = serializers.CharField(source='parent.name', read_only=True)
+    project_name = serializers.CharField(source='project.name', read_only=True)
     children_count = serializers.SerializerMethodField()
     level = serializers.SerializerMethodField()
     is_root = serializers.SerializerMethodField()
@@ -97,14 +99,14 @@ class WholesaleSerializer(serializers.ModelSerializer):
         model = Wholesale
         fields = [
             'id', 'name', 'phone_number', 'address', 'city', 'pic', 'is_active',
-            'created_at', 'updated_at', 'parent', 'parent_name',
+            'created_at', 'updated_at', 'parent', 'parent_name', 'project', 'project_name',
             'children_count', 'level', 'is_root', 'is_leaf'
         ]
         ref_name = 'APIWholesale'
 
     def get_children_count(self, obj):
-        """Get count of direct children"""
-        return obj.get_children().count()
+        """Get count of direct children that are active"""
+        return obj.get_children(active_only=True).count()
         
     def get_level(self, obj):
         """Get hierarchy level"""
@@ -115,8 +117,8 @@ class WholesaleSerializer(serializers.ModelSerializer):
         return obj.is_root()
         
     def get_is_leaf(self, obj):
-        """Check if is leaf"""
-        return obj.is_leaf()
+        """Check if is leaf (has no active children)"""
+        return obj.is_leaf(active_only=True)
 
     def validate_phone_number(self, value):
         return '62' + value[1:] if value.startswith('0') else value
@@ -149,7 +151,7 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
         voucher = Voucher.objects.filter(code=voucher_code, redeemed=False).first()
         if not voucher:
             raise serializers.ValidationError("Invalid or already redeemed voucher code.")
-        if voucher.expired_at < datetime.now():
+        if voucher.expired_at < timezone.now():
             raise serializers.ValidationError("Voucher has expired and cannot be redeemed.")
 
         wholesaler = Wholesale.objects.filter(id=ws_id).first()
@@ -175,7 +177,7 @@ class VoucherRedeemSerializer(serializers.ModelSerializer):
         return VoucherRedeem.objects.create(
             voucher=voucher,
             wholesaler=wholesaler,
-            redeemed_at=datetime.now()
+            redeemed_at=timezone.now()
         )
 
 # Retailer Photo Serializer
@@ -377,7 +379,7 @@ class RetailerRegistrationSerializer(serializers.Serializer):
                         <tr><td><strong>Nama Retailer</strong></td><td>: {retailer.name}</td></tr>
                         <tr><td><strong>No WhatsApp</strong></td><td>: {retailer.phone_number}</td></tr>
                         <tr><td><strong>Nama Agen</strong></td><td>: {wholesale.name}</td></tr>
-                        <tr><td><strong>Tanggal Pengisian</strong></td><td>: {datetime.now().strftime('%Y-%m-%d')}</td></tr>
+                        <tr><td><strong>Tanggal Pengisian</strong></td><td>: {timezone.now().strftime('%Y-%m-%d')}</td></tr>
                         <tr><td><strong>Status</strong></td><td>: Menunggu Verifikasi</td></tr>
                     </table>
                     <p>Mohon segera melakukan verifikasi data mereka dengan klik tombol di bawah ini:</p>
@@ -482,10 +484,30 @@ class ReimburseSerializer(serializers.ModelSerializer):
     retailer_name = serializers.CharField(source='retailer.name', read_only=True)
     status = serializers.CharField(source='status.status', read_only=True)
     status_at = serializers.DateTimeField(source='status.status_at', read_only=True)
+    project = serializers.CharField(source='voucher.project', read_only=True)
+    project_name = serializers.CharField(source='voucher.project.name', read_only=True)
+    discount_amount = serializers.SerializerMethodField()
+    agen_fee = serializers.SerializerMethodField()
+
+    def get_discount_amount(self, obj):
+        # Get discount from VoucherRetailerDiscount (office_voucherretaildiscount)
+        if obj.voucher and obj.voucher.project_id:
+            discount = VoucherRetailerDiscount.objects.filter(voucher_project_id=obj.voucher.project_id).first()
+            if discount:
+                return float(discount.discount_amount)
+        return 0
+    
+    def get_agen_fee(self, obj):
+        # Get agen fee from VoucherRetailerDiscount (office_voucherretaildiscount)
+        if obj.voucher and obj.voucher.project_id:
+            discount = VoucherRetailerDiscount.objects.filter(voucher_project_id=obj.voucher.project_id).first()
+            if discount:
+                return float(discount.agen_fee)
+        return 0
 
     class Meta:
         model = Reimburse
-        fields = ['id', 'voucher_code', 'wholesaler_name', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status', 'status_at']
+        fields = ['id', 'voucher_code', 'wholesaler_name', 'retailer_name', 'reimbursed_at', 'reimbursed_by', 'status', 'status_at', 'project', 'project_name', 'discount_amount', 'agen_fee']
 
     def create(self, validated_data):
         voucher_code = self.initial_data.get('voucher_code')
@@ -503,7 +525,7 @@ class ReimburseSerializer(serializers.ModelSerializer):
         
         status = ReimburseStatus.objects.create(
             status='waiting',
-            status_at=datetime.now(),
+            status_at=timezone.now(),
             status_by=request.user.username
         )
 
@@ -630,7 +652,7 @@ class VoucherProjectSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         validated_data['updated_by'] = self.context['request'].user.username if self.context.get('request') else None
-        validated_data['updated_at'] = datetime.now()
+        validated_data['updated_at'] = timezone.now()
         return super().update(instance, validated_data)
 
 
@@ -659,7 +681,7 @@ class VoucherRetailerDiscountSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         validated_data['updated_by'] = self.context['request'].user.username if self.context.get('request') else None
-        validated_data['updated_at'] = datetime.now()
+        validated_data['updated_at'] = timezone.now()
         return super().update(instance, validated_data)
 
 
