@@ -447,75 +447,45 @@ def list_retailers(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_photos(request):
-    try:
-        filters = {
-            'is_verified': request.query_params.get('is_verified'),
-            'is_approved': request.query_params.get('is_approved'),
-            'is_rejected': request.query_params.get('is_rejected'),
-            'retailer__wholesale_id': request.query_params.get('ws_id')
-        }
-        
-        # Convert string 'true'/'false' to boolean
-        for key in ['is_verified', 'is_approved', 'is_rejected']:
-            if filters[key] is not None:
-                filters[key] = filters[key].lower() == 'true'
-        
-        # Remove None values
-        filters = {k: v for k, v in filters.items() if v is not None}
+    filters = {
+        'is_verified': request.query_params.get('is_verified'),
+        'is_approved': request.query_params.get('is_approved'),
+        'is_rejected': request.query_params.get('is_rejected'),
+        'retailer__wholesale_id': request.query_params.get('ws_id')
+    }
+    filters = {k: v for k, v in filters.items() if v is not None}
 
-        photos = RetailerPhoto.objects.filter(**filters).select_related('retailer')
-        
-        if not photos.exists():
-            return Response([], status=http_status.HTTP_200_OK)
+    photos = RetailerPhoto.objects.filter(**filters)
+    if not photos.exists():
+        return Response([], status=http_status.HTTP_200_OK)
 
-        response_data = {}
-        for photo in photos:
-            retailer = photo.retailer
-            retailer_id = retailer.id
-            
-            # Safe voucher query with try-catch
-            try:
-                voucher = Voucher.objects.filter(retailer=retailer).first()
-                voucher_code = voucher.code if voucher else None
-            except Exception as e:
-                voucher_code = None
-                print(f"Error getting voucher for retailer {retailer_id}: {e}")
+    response_data = {}
+    for photo in photos:
+        retailer = photo.retailer
+        retailer_id = retailer.id
+        voucher = Voucher.objects.filter(retailer=retailer).first()
+        voucher_code = voucher.code if voucher else None
+        if retailer_id not in response_data:
+            response_data[retailer_id] = {
+                "wholesale_name": retailer.wholesale.name,
+                "retailer_id": retailer_id,
+                "retailer_name": retailer.name,
+                "retailer_phone_number": retailer.phone_number,
+                "retailer_address": retailer.address,
+                "retailer_voucher_code": voucher_code,
+                "retailer_voucher_status": "PENDING" if not voucher else "RECEIVED",
+                "retailer_voucher_status_at": voucher.created_at if voucher else voucher.approved_at,
+                "photos": []
+            }
+        response_data[retailer_id]["photos"].append({
+            "image": photo.image.url if photo.image else None,
+            "is_verified": photo.is_verified,
+            "is_approved": photo.is_approved,
+            "is_rejected": photo.is_rejected,
+            "remarks": photo.remarks,
+        })
 
-            if retailer_id not in response_data:
-                response_data[retailer_id] = {
-                    'retailer_id': retailer_id,
-                    'retailer_name': retailer.name,
-                    'voucher_code': voucher_code,
-                    'wholesale_name': retailer.wholesale.name if retailer.wholesale else None,
-                    'photos': []
-                }
-
-            # Safe photo data building
-            try:
-                photo_data = {
-                    'id': photo.id,
-                    'photo_url': photo.photo.url if photo.photo else None,
-                    'is_verified': photo.is_verified,
-                    'is_approved': photo.is_approved,
-                    'is_rejected': photo.is_rejected,
-                    'verified_at': photo.verified_at.isoformat() if photo.verified_at else None,
-                    'approved_at': photo.approved_at.isoformat() if photo.approved_at else None,
-                    'rejected_at': photo.rejected_at.isoformat() if photo.rejected_at else None,
-                    'created_at': photo.created_at.isoformat() if photo.created_at else None,
-                }
-                response_data[retailer_id]['photos'].append(photo_data)
-            except Exception as e:
-                print(f"Error building photo data for photo {photo.id}: {e}")
-                continue
-
-        return Response(list(response_data.values()), status=http_status.HTTP_200_OK)
-        
-    except Exception as e:
-        print(f"Error in list_photos: {e}")
-        return Response(
-            {'error': 'Internal server error', 'detail': str(e)}, 
-            status=http_status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+    return Response(list(response_data.values()), status=http_status.HTTP_200_OK)
 
 # Office Verification Report View
 @api_view(['GET'])
