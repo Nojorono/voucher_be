@@ -68,7 +68,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     ),
                     'password': openapi.Schema(
                         type=openapi.TYPE_STRING, 
-                        example='Admin123!!',
+                        example='password123!!',
                         description='Password untuk login'
                     ),
                 }
@@ -87,7 +87,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                             "is_staff": True,
                             "wholesale": 1,
                             "name": "PT Wholesale ABC",
-                            "phone_number": "081234567890"
+                            "phone_number": "081234567890",
+                            "project": 2
                         }
                     }
                 ),

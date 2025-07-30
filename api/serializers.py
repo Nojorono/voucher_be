@@ -39,7 +39,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             if wholesale:
                 wholesale_data = {
                     'name': wholesale.name,
-                    'phone_number': wholesale.phone_number
+                    'phone_number': wholesale.phone_number,
+                    'project': wholesale.project_id if wholesale.project else None
                 }
         data.update({
             'message': "Login successful",

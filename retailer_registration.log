@@ -104,3 +104,16 @@
 2025-07-25 16:10:09,238 - INFO - Email sent successfully!
 2025-07-25 16:10:09,238 - INFO - Email sent to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
 2025-07-25 16:10:09,238 - INFO - === EMAIL SENDING END ===
+2025-07-30 08:27:28,936 - INFO - Validating retailer data: {'ws_name': 'Agen', 'name': 'asd', 'phone_number': '324146374', 'address': 'asd', 'provinsi': 'JAWA BARAT', 'kota': 'DEPOK', 'kecamatan': 'LIMO', 'kelurahan': 'GROGOL', 'project_id': 3, 'photos': [<InMemoryUploadedFile: logo-lakumart.png (image/png)>], 'photo_remarks': ['Foto Pack/Slop Display']}
+2025-07-30 08:27:28,995 - INFO - Starting retailer registration process...
+2025-07-30 08:27:29,024 - INFO - Retailer asd created successfully.
+2025-07-30 08:27:31,395 - INFO - Uploaded 1 photos for retailer asd
+2025-07-30 08:27:31,407 - INFO - Voucher QRNP708OD0 generated for retailer asd
+2025-07-30 08:27:31,409 - INFO - Email from: nna.mobile.dev@gmail.com
+2025-07-30 08:27:31,409 - INFO - Email thread started successfully
+2025-07-30 08:27:31,409 - INFO - To emails: ['banyu.senjana@limamail.net']
+2025-07-30 08:27:31,411 - INFO - CC emails: ['dimas.rosadi@limamail.net']
+2025-07-30 08:27:36,335 - INFO - Email sent successfully to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-30 08:27:36,335 - INFO - Email sent successfully!
+2025-07-30 08:27:36,335 - INFO - Email sent to ['banyu.senjana@limamail.net'] with CC to ['dimas.rosadi@limamail.net']
+2025-07-30 08:27:36,335 - INFO - === EMAIL SENDING END ===
