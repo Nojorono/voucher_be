@@ -652,6 +652,11 @@ class VoucherProjectSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
+        # Check if periode_end is being updated
+        periode_end = validated_data.get('periode_end', None)
+        if periode_end and periode_end != instance.periode_end:
+            # Update expired_at for all related vouchers
+            Voucher.objects.filter(project=instance).update(expired_at=periode_end)
         validated_data['updated_by'] = self.context['request'].user.username if self.context.get('request') else None
         validated_data['updated_at'] = timezone.now()
         return super().update(instance, validated_data)

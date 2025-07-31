@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 import json
-from retailer.models import RetailerPhoto, Retailer
+from retailer.models import RetailerPhoto, Retailer, Voucher
 from .models import VoucherLimit, VoucherProject, VoucherRetailerDiscount
 from .twilio import send_whatsapp_voucher  # Impor fungsi kirim WhatsApp
 
@@ -162,30 +162,34 @@ def voucher_project_detail(request, project_id):
             project.description = data.get('description', project.description)
             project.periode_start = data.get('periode_start', project.periode_start)
             project.periode_end = data.get('periode_end', project.periode_end)
+
+            # Update expired_at pada semua Voucher yang terkait dengan project ini
+            Voucher.objects.filter(project=project).update(expired_at=project.periode_end)
             project.is_active = data.get('is_active', project.is_active)
             project.updated_by = data.get('updated_by')
             project.updated_at = timezone.now()
             project.save()
             
             return JsonResponse({
-                'success': True,
-                'message': 'Voucher project updated successfully',
-                'data': {
-                    'id': project.id,
-                    'name': project.name,
-                    'is_active': project.is_active,
-                }
-            })
-        
+                            'success': True,
+                            'message': 'Voucher project updated successfully',
+                            'data': {
+                                'id': project.id,
+                                'name': project.name,
+                                'is_active': project.is_active,
+                            }
+                        })
+                    
         elif request.method == 'DELETE':
             project_name = project.name
-            project.delete()
+            project.is_active = False
+            project.save()
             
             return JsonResponse({
                 'success': True,
-                'message': f'Voucher project "{project_name}" deleted successfully'
-            })
-            
+                'message': f'Voucher project "{project_name}" deactivated (soft deleted) successfully'
+            })    
+        
     except Exception as e:
         return JsonResponse({
             'success': False,
