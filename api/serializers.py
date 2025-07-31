@@ -5,7 +5,7 @@ from retailer.models import Voucher, Retailer, RetailerPhoto
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 import random, string, threading, logging
-from datetime import datetime
+from datetime import datetime, time
 from django.utils import timezone
 from PIL import Image
 from io import BytesIO
@@ -13,6 +13,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 import os
+import pytz
 
 # Konfigurasi logger
 logger = logging.getLogger(__name__)
@@ -647,6 +648,52 @@ class VoucherProjectSerializer(serializers.ModelSerializer):
     def get_total_used(self, obj):
         return sum(limit.current_count for limit in obj.voucherlimit_set.all())
     
+    def validate_periode_end(self, value):
+        """Normalize periode_end to end of day (23:59:59) in Asia/Jakarta"""
+        if value:
+            # Get date part only
+            if hasattr(value, 'date'):
+                date_part = value.date()
+            else:
+                # If value is string, parse it
+                if isinstance(value, str):
+                    date_part = datetime.strptime(value, '%Y-%m-%d').date()
+                else:
+                    date_part = value
+            
+            # Create end of day in Jakarta timezone
+            jakarta_tz = pytz.timezone('Asia/Jakarta')
+            end_of_day = datetime.combine(date_part, time(23, 59, 59, 999999))
+            
+            # Localize to Jakarta timezone
+            jakarta_end = jakarta_tz.localize(end_of_day)
+            
+            return jakarta_end
+        return value
+
+    def validate_periode_start(self, value):
+        """Normalize periode_start to start of day (00:00:00) in Asia/Jakarta"""
+        if value:
+            # Get date part only
+            if hasattr(value, 'date'):
+                date_part = value.date()
+            else:
+                # If value is string, parse it
+                if isinstance(value, str):
+                    date_part = datetime.strptime(value, '%Y-%m-%d').date()
+                else:
+                    date_part = value
+            
+            # Create start of day in Jakarta timezone
+            jakarta_tz = pytz.timezone('Asia/Jakarta')
+            start_of_day = datetime.combine(date_part, time(0, 0, 0, 0))
+            
+            # Localize to Jakarta timezone
+            jakarta_start = jakarta_tz.localize(start_of_day)
+            
+            return jakarta_start
+        return value
+    
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user.username if self.context.get('request') else None
         return super().create(validated_data)
@@ -655,8 +702,15 @@ class VoucherProjectSerializer(serializers.ModelSerializer):
         # Check if periode_end is being updated
         periode_end = validated_data.get('periode_end', None)
         if periode_end and periode_end != instance.periode_end:
+            # Normalize to end of day before updating vouchers
+            normalized_end = periode_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
             # Update expired_at for all related vouchers
-            Voucher.objects.filter(project=instance).update(expired_at=periode_end)
+            Voucher.objects.filter(project=instance, redeemed=False).update(expired_at=normalized_end)
+            
+            # Update the validated_data with normalized end date
+            validated_data['periode_end'] = normalized_end
+            
         validated_data['updated_by'] = self.context['request'].user.username if self.context.get('request') else None
         validated_data['updated_at'] = timezone.now()
         return super().update(instance, validated_data)
