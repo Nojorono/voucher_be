@@ -949,11 +949,13 @@ class VoucherRetailerDiscountViewSet(viewsets.ModelViewSet):
         try:
             voucher = Voucher.objects.get(code=voucher_code)
             project = VoucherProject.objects.get(id=voucher.project_id)
-            # project = voucher.project_id
-            print(project)
             discounts = self.get_queryset().filter(voucher_project=project)
             serializer = self.get_serializer(discounts, many=True)
-            
+            # Tambahkan periode_start dan periode_end ke setiap item di serializer.data
+            for item in serializer.data:
+                item['periode_start'] = project.periode_start.date() if project.periode_start else None
+                item['periode_end'] = project.periode_end.date() if project.periode_end else None
+
             return Response({
                 'project': {
                     'id': project.id,
