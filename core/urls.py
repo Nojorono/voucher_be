@@ -28,29 +28,8 @@ SUB_PATH = os.getenv('SUB_PATH', '').strip('/')
 print(f"Core URLs - SUB_PATH: {SUB_PATH}")
 
 def health_check(request):
-    """Health check endpoint"""
-    try:
-        response_data = {
-            "status": "healthy", 
-            "service": "ryo-backend",
-            "force_script_name": getattr(settings, 'FORCE_SCRIPT_NAME', None),
-            "debug": getattr(settings, 'DEBUG', False),
-            "environment": getattr(settings, 'ENVIRONMENT', 'unknown'),
-            "static_url": getattr(settings, 'STATIC_URL', '/static/'),
-            "static_root": getattr(settings, 'STATIC_ROOT', '/app/staticfiles'),
-            "debug": getattr(settings, 'DEBUG', False),
-            "timestamp": str(request.META.get('HTTP_DATE', 'N/A')),
-            "media_url": getattr(settings, 'MEDIA_URL', '/media/'),
-            "request_path": request.path,
-            "request_path_info": request.path_info,
-        }
-        return JsonResponse(response_data, safe=False)
-    except Exception as e:
-        return JsonResponse({
-            "status": "error",
-            "message": str(e),
-            "service": "ryo-backend"
-        }, status=500)
+    """ALB Health check endpoint"""
+    return HttpResponse("healthy", content_type="text/plain", status=200)
 
 def debug_static(request):
     """Debug static files"""

@@ -69,7 +69,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or ['localhost',
                  'apiryo.localhost',     # ✅ ADD: Backend domain localhost
                  'ryo.localhost',        # ✅ ADD: Frontend domain localhost
                  'apiryo.kcsi.id',  # Backend domain
-		 'backend-ryo',
+		         'backend-ryo',
                  'api.kcsi.id',
                  'ryo.kcsi.id',     # Allow frontend domain for admin access
                  'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
@@ -123,7 +123,13 @@ PREPEND_WWW = False   # Disable www prefix redirects
 # AWS ALB Configuration
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_FOR = True
+
+# Trust ALB headers for proper URL generation
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Allow ALB health checks and internal communication
+ALLOWED_CIDR_NETS = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
 
 CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
@@ -253,22 +259,22 @@ AWS_QUERYSTRING_AUTH = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-# HTTPS Configuration
+# HTTPS Configuration for ALB setup
 if not DEBUG:
-    # ✅ Force HTTPS untuk production
+    # ✅ Trust ALB SSL termination
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = False  # ALB handles SSL, don't redirect internally
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
     
-    # ✅ HSTS Settings
-    SECURE_HSTS_SECONDS = 86400
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    # ✅ HSTS Settings - let ALB handle this
+    SECURE_HSTS_SECONDS = 0  # Disable HSTS on Django side
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
     
-    # ✅ Cookie security
-    SESSION_COOKIE_SECURE = True
+    # ✅ Cookie security - but allow HTTP internally
+    SESSION_COOKIE_SECURE = True  # Keep secure for external
     CSRF_COOKIE_SECURE = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
