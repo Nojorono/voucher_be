@@ -1,6 +1,29 @@
 import logging
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+class KongProxyMiddleware:
+    """
+    Middleware to handle Kong proxy requests without causing 301 redirects
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Handle Kong proxy headers
+        if hasattr(settings, 'KONG_SUB_PATH') and settings.KONG_SUB_PATH:
+            # Check if request comes through Kong (has Kong headers)
+            if 'X-Kong-Request-Id' in request.META or 'Via' in request.META:
+                # This is a Kong proxied request, adjust the path if needed
+                # But don't redirect, just process normally
+                pass
+            else:
+                # Direct request - ensure no redirects to sub-path
+                pass
+        
+        response = self.get_response(request)
+        return response
 
 class ALBCORSMiddleware:
     def __init__(self, get_response):

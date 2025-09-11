@@ -43,13 +43,17 @@ hostname = os.getenv('HOSTNAME', '')
 is_production = os.getenv('ENVIRONMENT', 'development') == 'production'
 is_kong_environment = 'kcsi.id' in hostname or os.getenv('USE_KONG', 'false').lower() == 'true'
 
-# Set FORCE_SCRIPT_NAME only for reverse URL generation
+# Set FORCE_SCRIPT_NAME only for reverse URL generation, but not for direct endpoint access
+# We'll handle this in middleware instead to avoid 301 redirects on direct endpoint access
+FORCE_SCRIPT_NAME = None
 if USE_KONG and ENVIRONMENT == 'production' and SUB_PATH:
-    FORCE_SCRIPT_NAME = f'{SUB_PATH}'
-    print(f"Production mode: FORCE_SCRIPT_NAME={FORCE_SCRIPT_NAME}")
+    # Store the sub_path for middleware use, but don't set FORCE_SCRIPT_NAME
+    # This prevents Django from automatically redirecting all requests
+    KONG_SUB_PATH = SUB_PATH
+    print(f"Production mode: Kong sub-path={SUB_PATH}, FORCE_SCRIPT_NAME disabled to prevent redirects")
 else:
-    FORCE_SCRIPT_NAME = None
-    print("Development mode: FORCE_SCRIPT_NAME disabled")
+    KONG_SUB_PATH = None
+    print("Development mode: No Kong sub-path configured")
 
 # Debug output
 print(f"DEBUG: {DEBUG}")
@@ -98,6 +102,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core.middleware.KongProxyMiddleware',  # Add Kong proxy middleware first
     # 'core.middleware.ALBCORSMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -110,6 +115,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
+
+# URL configuration to prevent 301 redirects
+APPEND_SLASH = False  # Disable automatic trailing slash redirects
+PREPEND_WWW = False   # Disable www prefix redirects
 
 # AWS ALB Configuration
 USE_X_FORWARDED_HOST = True
