@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
+from django.views.generic import RedirectView
 import json
 import os
 
@@ -76,10 +77,37 @@ def debug_static(request):
             "error": str(e)
         }, status=500)
 
+def metrics_view(request):
+    """Prometheus metrics endpoint"""
+    try:
+        # Basic metrics in Prometheus format
+        metrics = """# HELP django_up Application status
+# TYPE django_up gauge
+django_up 1
+
+# HELP django_requests_total Total number of HTTP requests
+# TYPE django_requests_total counter
+django_requests_total 1
+
+# HELP django_info Application information
+# TYPE django_info gauge
+django_info{{version="5.1",service="ryo-backend",environment="{environment}"}} 1
+""".format(environment=getattr(settings, 'ENVIRONMENT', 'development'))
+        
+        return HttpResponse(metrics, content_type='text/plain; version=0.0.4; charset=utf-8')
+    except Exception as e:
+        error_metrics = """# HELP django_up Application status
+# TYPE django_up gauge
+django_up 0
+"""
+        return HttpResponse(error_metrics, content_type='text/plain; version=0.0.4; charset=utf-8', status=500)
+
 urlpatterns = [
     path('4dm1nxXx/', admin.site.urls),
     path('health/', health_check),
     path('debug-static/', debug_static),
+    path('metrics/', metrics_view),
+    path('favicon.ico', RedirectView.as_view(url='/staticfiles/drf-yasg/swagger-ui-dist/favicon-32x32.png')),
     path('api/', include('api.urls')),
     path('office/', include('office.urls')),
     path('retailer/', include('retailer.urls')),
