@@ -163,10 +163,10 @@ kelurahan_params = [param_query('kecamatan', openapi.TYPE_STRING, 'Nama kecamata
 kecamatan_params = [param_query('kota', openapi.TYPE_STRING, 'Nama kota (untuk filter kecamatan)')]
 kota_params = [param_query('provinsi', openapi.TYPE_STRING, 'Nama provinsi (untuk filter kota)')]
 kodepos_detail_params = [
-    param_query('kelurahan', openapi.TYPE_STRING),
-    param_query('kecamatan', openapi.TYPE_STRING),
-    param_query('kota', openapi.TYPE_STRING),
-    param_query('provinsi', openapi.TYPE_STRING),
+    param_query('kelurahan', openapi.TYPE_STRING, 'Nama kelurahan'),
+    param_query('kecamatan', openapi.TYPE_STRING, 'Nama kecamatan'),
+    param_query('kota', openapi.TYPE_STRING, 'Nama kota'),
+    param_query('provinsi', openapi.TYPE_STRING, 'Nama provinsi'),
 ]
 
 # List reimburse
