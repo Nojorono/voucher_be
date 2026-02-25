@@ -62,20 +62,19 @@ print(f"USE_KONG: {USE_KONG}")
 print(f"ENVIRONMENT: {ENVIRONMENT}")
 print(f"FORCE_SCRIPT_NAME: {FORCE_SCRIPT_NAME}")
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or ['localhost', 
-                 '127.0.0.1', 
-                 '0.0.0.0',
-                 '10.0.63.158',  # Local network IP for development 
-                 'apiryo.localhost',     # ✅ ADD: Backend domain localhost
-                 'ryo.localhost',        # ✅ ADD: Frontend domain localhost
-                 'apiryo.kcsi.id',  # Backend domain
-		         'backend-ryo',
-                 'api.kcsi.id',
-                 'ryo.kcsi.id',     # Allow frontend domain for admin access
-                 'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com',
-                 '.amazonaws.com',  # ← Wildcard untuk semua AWS domains
-                 '.kcsi.id',        # ← Wildcard untuk domain kcsi.id
-            ]
+# Django membandingkan Host header lengkap (termasuk port). Sertakan localhost:9002 (backend) dan localhost:8000 (Kong).
+_default_allowed = [
+    'localhost', 'localhost:9002', 'localhost:8000', '127.0.0.1', '0.0.0.0', '10.0.63.158',
+    'apiryo.localhost', 'ryo.localhost', 'apiryo.kcsi.id', 'backend-ryo',
+    'api.kcsi.id', 'ryo.kcsi.id',
+    'kcsi-alb-prod-1476414350.ap-southeast-3.elb.amazonaws.com', '.amazonaws.com', '.kcsi.id',
+]
+_raw_hosts = os.getenv('ALLOWED_HOSTS', '').strip()
+ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(',') if h.strip()] if _raw_hosts else _default_allowed
+# Selalu izinkan akses langsung backend (9002) dan via Kong (8000) agar /docs/ tidak 400
+for _h in ('localhost:9002', 'localhost:8000'):
+    if _h not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_h)
 
 # Application definition
 
