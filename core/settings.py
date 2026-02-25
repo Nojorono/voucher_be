@@ -43,17 +43,17 @@ hostname = os.getenv('HOSTNAME', '')
 is_production = os.getenv('ENVIRONMENT', 'development') == 'production'
 is_kong_environment = 'kcsi.id' in hostname or os.getenv('USE_KONG', 'false').lower() == 'true'
 
-# Set FORCE_SCRIPT_NAME only for reverse URL generation, but not for direct endpoint access
-# We'll handle this in middleware instead to avoid 301 redirects on direct endpoint access
-FORCE_SCRIPT_NAME = None
-if USE_KONG and ENVIRONMENT == 'production' and SUB_PATH:
-    # Store the sub_path for middleware use, but don't set FORCE_SCRIPT_NAME
-    # This prevents Django from automatically redirecting all requests
+# FORCE_SCRIPT_NAME = basePath untuk URL generation dan OpenAPI schema (Swagger).
+# Wajib di-set saat app diakses via prefix (e.g. api.kcsi.id/ryo-api/) agar curl di Swagger hit /ryo-api/api/login/.
+_sub_path_normalized = (SUB_PATH or '').strip().strip('/')
+if _sub_path_normalized:
+    FORCE_SCRIPT_NAME = f'/{_sub_path_normalized}'
     KONG_SUB_PATH = SUB_PATH
-    print(f"Production mode: Kong sub-path={SUB_PATH}, FORCE_SCRIPT_NAME disabled to prevent redirects")
+    print(f"FORCE_SCRIPT_NAME={FORCE_SCRIPT_NAME} (basePath for Swagger & reverse URLs)")
 else:
+    FORCE_SCRIPT_NAME = None
     KONG_SUB_PATH = None
-    print("Development mode: No Kong sub-path configured")
+    print("FORCE_SCRIPT_NAME disabled (no SUB_PATH)")
 
 # Debug output
 print(f"DEBUG: {DEBUG}")
