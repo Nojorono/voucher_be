@@ -124,37 +124,25 @@ USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 USE_X_FORWARDED_FOR = True
 
-# Trust ALB headers for proper URL generation
+# Trust ALB headers for proper URL generation (agar request dianggap HTTPS)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Allow ALB health checks and internal communication
 ALLOWED_CIDR_NETS = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
 
-CORS_ALLOW_ALL_ORIGINS = False  # Disable this if you want to restrict origins
+CORS_ALLOW_ALL_ORIGINS = False
+# Sertakan https://api.kcsi.id agar request dari Swagger (Try it out) di docs tidak kena CORS
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') or [
-    "http://localhost:5174",
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "http://localhost:9002",
-
-    "http://api.kcsi.id",
-    "https://api.kcsi.id",
-    
-    # Localhost domains
-    "http://ryo.localhost",        # ✅ ADD: Frontend localhost domain
-    "http://apiryo.localhost",     # ✅ ADD: Backend localhost domain
-
-    # Production domains
-    "http://ryo.kcsi.id",
-    "https://ryo.kcsi.id",
-    "http://apiryo.kcsi.id",
-    "https://apiryo.kcsi.id",
+    "http://localhost:5174", "http://localhost:8080", "http://localhost:3000", "http://localhost:9002",
+    "http://api.kcsi.id", "https://api.kcsi.id",
+    "http://ryo.localhost", "http://apiryo.localhost",
+    "http://ryo.kcsi.id", "https://ryo.kcsi.id", "http://apiryo.kcsi.id", "https://apiryo.kcsi.id",
 ]
-
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
-CORS_ALLOW_CREDENTIALS = False  # Jika menggunakan cookies atau session
+CORS_ALLOW_CREDENTIALS = False
 CORS_PREFLIGHT_MAX_AGE = 86400
+CORS_EXPOSE_HEADERS = ["Content-Type", "Authorization"]
 
 # CSRF settings for cross-domain
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') or [
@@ -319,8 +307,15 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,                 # Blacklist old refresh tokens
 }
 
+# Base URL untuk OpenAPI schema: pakai HTTPS di production agar Swagger UI hit https:// (hindari CORS/mixed content)
+_swagger_host = (hostname or 'localhost:9002').replace('http://', '').replace('https://', '').strip()
+_swagger_scheme = 'https' if (is_production or is_kong_environment) else 'http'
+SWAGGER_BASE_URL = os.getenv('SWAGGER_BASE_URL', f'{_swagger_scheme}://{_swagger_host}')
+
 # Swagger settings for JWT Authentication
 SWAGGER_SETTINGS = {
+    'DEFAULT_API_URL': SWAGGER_BASE_URL,
+    'VALIDATOR_URL': None,
     'SECURITY_DEFINITIONS': {
         'Bearer': {
             'type': 'apiKey',
