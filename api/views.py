@@ -36,6 +36,14 @@ from django.utils import timezone
 try:
     from drf_yasg.utils import swagger_auto_schema
     from drf_yasg import openapi
+    from .swagger_schemas import (
+        login_request, register_request, change_password_request, reset_password_request, logout_request,
+        retailer_register_request, redeem_voucher_request, submit_trx_voucher_request, submit_reimburse_request,
+        admin_update_user_request, voucher_limit_increment_request,
+        redeem_report_params, list_retailers_params, list_photos_params, list_vouchers_params,
+        kelurahan_params, kecamatan_params, kota_params, kodepos_detail_params,
+        list_reimburse_params, get_current_count_params,
+    )
     SWAGGER_AVAILABLE = True
 except ImportError:
     SWAGGER_AVAILABLE = False
@@ -43,6 +51,12 @@ except ImportError:
         def decorator(func):
             return func
         return decorator
+    login_request = register_request = change_password_request = reset_password_request = logout_request = None
+    retailer_register_request = redeem_voucher_request = submit_trx_voucher_request = submit_reimburse_request = None
+    admin_update_user_request = voucher_limit_increment_request = None
+    redeem_report_params = list_retailers_params = list_photos_params = list_vouchers_params = None
+    kelurahan_params = kecamatan_params = kota_params = kodepos_detail_params = None
+    list_reimburse_params = get_current_count_params = None
 
 # Custom Token Obtain Pair View dengan Swagger documentation
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -162,6 +176,17 @@ class WholesaleViewSet(viewsets.ModelViewSet):
         return Wholesale.objects.select_related('parent').prefetch_related('children').order_by('-created_at')
 
 # Register View
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Register User",
+    operation_description="Mendaftarkan user baru. Parameter wajib: username, password, email, wholesale.",
+    request_body=register_request,
+    responses={
+        201: openapi.Response(description="User berhasil didaftarkan", examples={"application/json": {"id": 1, "username": "user1", "email": "user@example.com", "wholesale": 1}}),
+        400: openapi.Response(description="Data tidak valid", examples={"application/json": {"username": ["This field is required."]}}),
+    },
+    tags=['User Management'],
+)
 @api_view(['POST'])
 def register(request):
     serializer = UserSerializer(data=request.data)
@@ -173,54 +198,20 @@ def register(request):
 # Admin Update User View
 @swagger_auto_schema(
     method='put',
-    operation_description="Update user data by admin",
     operation_summary="Admin Update User",
+    operation_description="Update data user oleh admin. Path: user_id. Body (optional): username, email, first_name, last_name, is_staff. Butuh Bearer token.",
     manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="JWT Bearer Token (required)",
-            type=openapi.TYPE_STRING,
-            format='Bearer <token>',
-            required=True
-        )
+        openapi.Parameter('user_id', openapi.IN_PATH, description="ID user yang akan diupdate", type=openapi.TYPE_INTEGER, required=True),
     ],
-    request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'username': openapi.Schema(type=openapi.TYPE_STRING, example='newusername'),
-            'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@example.com'),
-            'first_name': openapi.Schema(type=openapi.TYPE_STRING, example='John'),
-            'last_name': openapi.Schema(type=openapi.TYPE_STRING, example='Doe'),
-            'is_staff': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
-        }
-    ),
+    request_body=admin_update_user_request,
     responses={
-        200: openapi.Response(
-            description="User updated successfully",
-            examples={
-                "application/json": {
-                    "id": 1,
-                    "username": "newusername",
-                    "email": "user@example.com",
-                    "first_name": "John",
-                    "last_name": "Doe",
-                    "is_staff": False
-                }
-            }
-        ),
-        401: openapi.Response(
-            description="Authentication required",
-            examples={
-                "application/json": {
-                    "detail": "Authentication credentials were not provided."
-                }
-            }
-        ),
-        404: openapi.Response(description="User not found")
+        200: openapi.Response(description="User berhasil diupdate", examples={"application/json": {"id": 1, "username": "newusername", "email": "user@example.com"}}),
+        400: openapi.Response(description="Data tidak valid"),
+        401: openapi.Response(description="Harus login"),
+        404: openapi.Response(description="User tidak ditemukan"),
     },
     tags=['User Management'],
-    security=[{'Bearer': []}]
+    security=[{'Bearer': []}],
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -233,6 +224,15 @@ def admin_update_user(request, user_id):
     return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Admin Delete User View
+@swagger_auto_schema(
+    method='delete',
+    operation_summary="Admin Hapus User",
+    operation_description="Menghapus user by ID. Path: user_id. Butuh Bearer token.",
+    manual_parameters=[openapi.Parameter('user_id', openapi.IN_PATH, description="ID user", type=openapi.TYPE_INTEGER, required=True)],
+    responses={204: openapi.Response(description="User terhapus"), 401: openapi.Response(description="Harus login"), 404: openapi.Response(description="User tidak ditemukan")},
+    tags=['User Management'],
+    security=[{'Bearer': []}],
+)
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def admin_delete_user(request, user_id):
@@ -241,6 +241,19 @@ def admin_delete_user(request, user_id):
     return Response({"message": "User deleted successfully"}, status=http_status.HTTP_204_NO_CONTENT)
 
 # Change Password View
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Ubah Password",
+    operation_description="Mengganti password user yang login. Butuh: current_password dan new_password.",
+    request_body=change_password_request,
+    responses={
+        200: openapi.Response(description="Password berhasil diubah", examples={"application/json": {"message": "Password changed successfully"}}),
+        400: openapi.Response(description="Password saat ini salah atau validasi gagal"),
+        401: openapi.Response(description="Harus login (Bearer token)"),
+    },
+    tags=['Authentication'],
+    security=[{'Bearer': []}],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
@@ -251,6 +264,17 @@ def change_password(request):
     return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Reset Password View
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Reset Password",
+    operation_description="Request reset password via email. Parameter wajib: email (email terdaftar).",
+    request_body=reset_password_request,
+    responses={
+        200: openapi.Response(description="Link reset dikirim", examples={"application/json": {"message": "Reset password link sent"}}),
+        404: openapi.Response(description="Email tidak ditemukan", examples={"application/json": {"message": "Email not found"}}),
+    },
+    tags=['Authentication'],
+)
 @api_view(['POST'])
 def reset_password(request):
     user = User.objects.filter(email=request.data.get('email')).first()
@@ -260,6 +284,19 @@ def reset_password(request):
     return Response({"message": "Email not found"}, status=http_status.HTTP_404_NOT_FOUND)
 
 # Logout View
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Logout",
+    operation_description="Blacklist refresh token agar tidak bisa dipakai lagi. Body: { \"refresh\": \"<refresh_token_dari_login>\" }.",
+    request_body=logout_request,
+    responses={
+        205: openapi.Response(description="Logout berhasil", examples={"application/json": {"message": "Logout successful"}}),
+        400: openapi.Response(description="Token tidak valid", examples={"application/json": {"message": "Invalid token"}}),
+        401: openapi.Response(description="Harus login"),
+    },
+    tags=['Authentication'],
+    security=[{'Bearer': []}],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):
@@ -331,6 +368,17 @@ class RetailerViewSet(viewsets.ModelViewSet):
         return Response({"message": "All photos for retailer rejected successfully."}, status=http_status.HTTP_200_OK)
 
 # Retailer Registration API
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Registrasi Retailer + Upload Foto",
+    operation_description="Mendaftarkan retailer dan upload foto. Wajib: ws_name, name, phone_number, kecamatan, photos (file), photo_remarks (array string). Request multipart/form-data.",
+    request_body=retailer_register_request,
+    responses={
+        201: openapi.Response(description="Retailer terdaftar", examples={"application/json": {"message": "Retailer registered successfully", "voucher_code": "VCR-XXX", "retailer_id": 1}}),
+        400: openapi.Response(description="Validasi gagal (nama wholesale, no HP duplikat, dll)"),
+    },
+    tags=['Retailer'],
+)
 @api_view(['POST'])
 def retailer_register_upload(request):
     serializer = RetailerRegistrationSerializer(data=request.data)
@@ -346,6 +394,19 @@ def retailer_register_upload(request):
     return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Redeem Voucher API
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Tebus Voucher",
+    operation_description="Menebus voucher oleh wholesaler. Parameter wajib: voucher_code, ws_id (ID wholesale). Voucher harus sudah diverifikasi foto.",
+    request_body=redeem_voucher_request,
+    responses={
+        201: openapi.Response(description="Voucher berhasil ditebus", examples={"application/json": {"message": "Voucher redeemed successfully"}}),
+        400: openapi.Response(description="Voucher invalid/sudah ditebus/expired atau ws_id tidak sesuai"),
+        401: openapi.Response(description="Harus login (Bearer token)"),
+    },
+    tags=['Voucher'],
+    security=[{'Bearer': []}],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def redeem_voucher(request):
@@ -356,6 +417,19 @@ def redeem_voucher(request):
     return Response(serializer.errors, status=http_status.HTTP_400_BAD_REQUEST)
 
 # Submit Transaction Voucher API
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Submit Transaksi Voucher",
+    operation_description="Menyimpan transaksi setelah voucher ditebus. Wajib: voucher_code, ws_id, total_price, total_price_after_discount, image (file), items (array: item_id, qty, sub_total). Request multipart/form-data.",
+    request_body=submit_trx_voucher_request,
+    responses={
+        201: openapi.Response(description="Transaksi tersimpan", examples={"application/json": {"message": "Voucher redeemed and transaction saved successfully", "voucher_redeem": {}, "transaction": {}}}),
+        400: openapi.Response(description="Field wajib kurang / voucher sudah disubmit"),
+        401: openapi.Response(description="Harus login"),
+    },
+    tags=['Voucher'],
+    security=[{'Bearer': []}],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_trx_voucher(request):
@@ -399,6 +473,15 @@ def submit_trx_voucher(request):
     }, status=http_status.HTTP_201_CREATED)
 
 # Redeem Report API
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Laporan Penebusan Voucher",
+    operation_description="Daftar voucher yang sudah ditebus. Query opsional: ws_id (filter by wholesaler ID).",
+    manual_parameters=redeem_report_params,
+    responses={200: openapi.Response(description="List redeemed_vouchers: voucher_code, redeemed_at, wholesaler")},
+    tags=['Report'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def redeem_report(request):
@@ -415,6 +498,15 @@ def redeem_report(request):
     return Response({"redeemed_vouchers": data}, status=http_status.HTTP_200_OK)
 
 # List Retailer
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Daftar Retailer",
+    operation_description="List retailer dengan filter. Query: ws_id, voucher_code, retailer_name, voucher_status (PENDING|REJECTED|RECEIVED|REDEEMED|WAITING REIMBURSE|REIMBURSE COMPLETED|REIMBURSE PAID).",
+    manual_parameters=list_retailers_params,
+    responses={200: openapi.Response(description="Array retailer")},
+    tags=['Retailer'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_retailers(request):
@@ -444,6 +536,15 @@ def list_retailers(request):
     return Response(serializer.data, status=http_status.HTTP_200_OK)
 
 # List Retailer Photos
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Daftar Foto Retailer",
+    operation_description="List foto retailer per wholesale. Query: is_verified, is_approved, is_rejected (boolean), ws_id.",
+    manual_parameters=list_photos_params,
+    responses={200: openapi.Response(description="Array object: wholesale_name, retailer_id, retailer_name, photos[]")},
+    tags=['Retailer'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_photos(request):
@@ -497,6 +598,14 @@ def list_photos(request):
     return Response(list(response_data.values()), status=http_status.HTTP_200_OK)
 
 # Office Verification Report View
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Laporan Foto Belum Diverifikasi",
+    operation_description="Jumlah foto per retailer yang belum diverifikasi (is_verified=false).",
+    responses={200: openapi.Response(description="photos_to_verify: [{ retailer, total }]")},
+    tags=['Report'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def office_verification_report(request):
@@ -504,6 +613,15 @@ def office_verification_report(request):
     return Response({"photos_to_verify": list(photos_to_verify)}, status=http_status.HTTP_200_OK)
 
 # List Vouchers
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Daftar Voucher",
+    operation_description="List voucher dengan filter. Query: retailer_id, ws_id, voucher_code, redeemed (boolean).",
+    manual_parameters=list_vouchers_params,
+    responses={200: openapi.Response(description="Array voucher")},
+    tags=['Voucher'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_vouchers(request):
@@ -519,35 +637,47 @@ def list_vouchers(request):
     serializer = VoucherSerializer(vouchers, many=True)
     return Response(serializer.data, status=http_status.HTTP_200_OK) 
 
+@swagger_auto_schema(method='get', operation_summary="Daftar Kodepos", operation_description="List semua kodepos unik.", tags=['Lokasi'])
 @api_view(['GET'])
 def kodepos_list(request):
     kodepos_list = Kodepos.objects.values_list('kodepos', flat=True).distinct()
     return Response(kodepos_list)
 
+@swagger_auto_schema(method='get', operation_summary="Daftar Kelurahan", operation_description="List kelurahan. Query opsional: kecamatan (untuk filter).", manual_parameters=kelurahan_params, tags=['Lokasi'])
 @api_view(['GET'])
 def kelurahan_list(request):
     kecamatan = request.query_params.get('kecamatan')
     kelurahan_list = Kodepos.objects.filter(kecamatan=kecamatan).values_list('kelurahan', flat=True).distinct() if kecamatan else Kodepos.objects.values_list('kelurahan', flat=True).distinct()
     return Response(kelurahan_list)
 
+@swagger_auto_schema(method='get', operation_summary="Daftar Kecamatan", operation_description="List kecamatan. Query opsional: kota.", manual_parameters=kecamatan_params, tags=['Lokasi'])
 @api_view(['GET'])
 def kecamatan_list(request):
     kota = request.query_params.get('kota')
     kecamatan_list = Kodepos.objects.filter(kota=kota).values_list('kecamatan', flat=True).distinct() if kota else Kodepos.objects.values_list('kecamatan', flat=True).distinct()
     return Response(kecamatan_list)
 
+@swagger_auto_schema(method='get', operation_summary="Daftar Kota", operation_description="List kota. Query opsional: provinsi.", manual_parameters=kota_params, tags=['Lokasi'])
 @api_view(['GET'])
 def kota_list(request):
     provinsi = request.query_params.get('provinsi')
     kota_list = Kodepos.objects.filter(provinsi=provinsi).values_list('kota', flat=True).distinct() if provinsi else Kodepos.objects.values_list('kota', flat=True).distinct()
     return Response(kota_list)
 
+@swagger_auto_schema(method='get', operation_summary="Daftar Provinsi", operation_description="List semua provinsi unik.", tags=['Lokasi'])
 @api_view(['GET'])
 def provinsi_list(request):
     provinsi_list = Kodepos.objects.values_list('provinsi', flat=True).distinct()
     return Response(provinsi_list)
 
 class KodeposDetailView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Detail Kodepos",
+        operation_description="Detail kodepos by kelurahan, kecamatan, kota, provinsi. Query: salah satu atau kombinasi kelurahan, kecamatan, kota, provinsi.",
+        manual_parameters=kodepos_detail_params,
+        responses={200: openapi.Response(description="Object kodepos"), 404: openapi.Response(description="Kodepos not found")},
+        tags=['Lokasi'],
+    )
     def get(self, request):
         filters = {
             'kelurahan': request.query_params.get('kelurahan'),
@@ -605,6 +735,16 @@ class ReportView(APIView):
         df.to_excel(writer, index=False, sheet_name='Sheet1')
         writer._save()
 
+    @swagger_auto_schema(
+        operation_summary="Export Report ke Excel",
+        operation_description="Generate file Excel untuk report. Path view_name: redeem_report | list_photos | list_vouchers | list_reimburse. Response berisi message dan file_path.",
+        manual_parameters=[
+            openapi.Parameter('view_name', openapi.IN_PATH, description="redeem_report, list_photos, list_vouchers, list_reimburse", type=openapi.TYPE_STRING, required=True, enum=['redeem_report', 'list_photos', 'list_vouchers', 'list_reimburse']),
+        ],
+        responses={200: openapi.Response(description="message, file_path"), 400: openapi.Response(description="Invalid view name")},
+        tags=['Report'],
+        security=[{'Bearer': []}],
+    )
     def get(self, request, view_name):
         queryset = self.get_queryset(view_name)
         serializer_class = self.get_serializer_class(view_name)
@@ -617,6 +757,14 @@ class ReportView(APIView):
         
         return Response({"message": "Report generated successfully", "file_path": file_path}, status=http_status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Daftar Item",
+    operation_description="List semua item (untuk transaksi voucher). Butuh Bearer token.",
+    responses={200: openapi.Response(description="Array item: id, name, dll")},
+    tags=['Item'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_items(request):
@@ -624,6 +772,19 @@ def list_items(request):
     serializer = ItemSerializer(items, many=True)
     return Response(serializer.data, status=http_status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Submit Reimburse",
+    operation_description="Ajukan reimburse untuk beberapa voucher. Body: voucher_codes (array string kode voucher). Setiap voucher harus sudah redeemed.",
+    request_body=submit_reimburse_request,
+    responses={
+        201: openapi.Response(description="Array: per voucher { voucher_code, status/error }"),
+        400: openapi.Response(description="voucher_codes harus array"),
+        401: openapi.Response(description="Harus login"),
+    },
+    tags=['Reimburse'],
+    security=[{'Bearer': []}],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def submit_reimburse(request):
@@ -656,6 +817,18 @@ def submit_reimburse(request):
 
     return Response(responses, status=http_status.HTTP_201_CREATED)
 
+@swagger_auto_schema(
+    method='patch',
+    operation_summary="Update Status Reimburse",
+    operation_description="Ubah status reimburse. Path: pk (ID reimburse), new_status. Nilai new_status: completed | paid.",
+    manual_parameters=[
+        openapi.Parameter('pk', openapi.IN_PATH, description="ID reimburse", type=openapi.TYPE_INTEGER, required=True),
+        openapi.Parameter('new_status', openapi.IN_PATH, description="completed atau paid", type=openapi.TYPE_STRING, required=True, enum=['completed', 'paid']),
+    ],
+    responses={200: openapi.Response(description="Status updated"), 400: openapi.Response(description="Invalid status"), 404: openapi.Response(description="Reimburse not found")},
+    tags=['Reimburse'],
+    security=[{'Bearer': []}],
+)
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_reimburse_status(request, pk, new_status):
@@ -681,6 +854,15 @@ def update_reimburse_status(request, pk, new_status):
     
     return Response({"message": f"Reimburse status updated to {new_status}"}, status=http_status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Daftar Reimburse",
+    operation_description="List reimburse dengan filter. Query: status (waiting|completed|paid), id, voucher_code.",
+    manual_parameters=list_reimburse_params,
+    responses={200: openapi.Response(description="Array reimburse beserta transactions")},
+    tags=['Reimburse'],
+    security=[{'Bearer': []}],
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_reimburse(request):
@@ -719,6 +901,17 @@ def list_reimburse(request):
 
     return Response(reimburse_data, status=http_status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Current Count Voucher Limit",
+    operation_description="Cek kuota voucher saat ini. Query: id (voucher_limit id) atau project_id. Response: current_count, limit, project_id.",
+    manual_parameters=get_current_count_params,
+    responses={
+        200: openapi.Response(description="current_count, limit, project_id atau message: Voucher limit reached"),
+        404: openapi.Response(description="Voucher limit not set"),
+    },
+    tags=['Voucher'],
+)
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_current_count(request):

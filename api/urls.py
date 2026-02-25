@@ -58,28 +58,27 @@ try:
             description="""
         # RYO Marketing Campaign API
 
-        API documentation for RYO Project - Marketing Campaign Management System
+        Dokumentasi lengkap untuk integrasi dengan RYO. Setiap endpoint menampilkan **parameter wajib** dan opsional, serta contoh request/response.
 
-        ## Authentication
+        ## Cara Pakai
+        1. **Login**: `POST /api/login/` dengan body `username` dan `password` → dapatkan `access` dan `refresh` token.
+        2. **Authorize**: Klik **Authorize**, masukkan `Bearer <access_token>` (token dari response login).
+        3. **Panggil endpoint lain**: Semua request akan otomatis menyertakan token.
 
-        This API uses JWT (JSON Web Token) authentication. To access protected endpoints:
+        ## Tag / Grup Endpoint
+        - **Authentication**: login, logout, ubah password, reset password
+        - **User Management**: register, admin update/delete user
+        - **Retailer**: registrasi retailer + upload foto, list retailer, list foto
+        - **Voucher**: tebus voucher, submit transaksi, list voucher, kuota (current count)
+        - **Reimburse**: submit reimburse, update status, list reimburse
+        - **Report**: laporan penebusan, foto belum verifikasi
+        - **Lokasi**: provinsi, kota, kecamatan, kelurahan, kodepos
+        - **Item**: daftar item untuk transaksi
 
-        1. **Get Token**: Use the `/login/` endpoint with your username and password
-        2. **Use Token**: Click the "Authorize" button and enter: `Bearer <your-access-token>`
-        3. **All subsequent requests** will automatically include the JWT token
-
-        ### Example:
-        ```
-        Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-        ```
-
-        ## Features:
-        - 🔐 JWT Authentication  
-        - 👥 User & Retailer Management
-        - 🎫 Voucher Management & Verification
-        - 📸 Photo Verification System
-        - 📊 Reporting & Analytics
-        - 🗺️ Geographic Data Management
+        ## Parameter di Swagger
+        - **Body**: Lihat kolom "Schema" / "Example Value" untuk field wajib (required) dan contoh isian.
+        - **Query**: Parameter filter opsional tercantum di bagian "Parameters" (mis. ws_id, voucher_status).
+        - **Path**: ID di URL (mis. user_id, pk) tercantum di "Parameters" tipe path.
         """,
             contact=openapi.Contact(
                 name="RYO API Support",
